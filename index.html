@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>NGHS Footprint Map</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="Assets/pin-drop.png">
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+
+    <!-- mapbox -->
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="style.css"></style>
+
+    <!-- geocoder -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.css" type="text/css">
+
+    <!-- google font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <!-- Google Material Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=map_search" />
+
+    <!-- shoelace for UI components -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/light.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script>
+
+    <!-- Libraries for CSV manipulation -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <!-- Simple Statistis for jenks natural breaks -->
+    <script src="https://unpkg.com/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
+
+    
+  </head>
+  <body>
+    
+    <!-- container for the geocoder search -->
+    <div id="geocoder-container"></div>
+
+    <!-- main map div -->
+    <div id="map"></div>
+
+    <!-- header -->
+    <header>
+      NGHS Footprint Map
+    </header>
+
+    <!-- shoelace drawer for filters -->
+    <sl-drawer label="" placement="start" class="drawer-placement" hidden>
+        <div id="filter-header" style="text-align: center; margin-top: -30px;">
+            <h3>Filter Patients</h3>
+        </div>
+
+      <!-- dropdown for map layers -->
+        <sl-select id="departmentSelect" label="By Department:" value="All">
+            <sl-option value="All">All</sl-option>
+            <sl-option value="GHI">GHI</sl-option>
+            <sl-option value="Orthopedics">Orthopedics</sl-option>
+            <sl-option value="NGPG">NGPG</sl-option>
+            <sl-option value="Surgical_Associates">Surgical Associates</sl-option>
+            <sl-option value="Urgent_Care">Urgent Care</sl-option>
+        </sl-select>
+      
+    <!-- vertical spacing -->
+    <br/>
+    <br/>
+
+        <!-- toggle for demographic compare -->
+        <div style="text-align: center; margin-top: 10px;">
+            <sl-switch id="compareDemographics">Show Comparison Map</sl-switch>
+        </div>
+
+      <!-- Dropdown that is hidden by default -->
+        <div id="comparisonDropdownContainer" style="display: none; margin-top: 30px;">
+            <sl-select id="comparisonSelect" label="Choose Comparison Layer" placeholder="Select layer">
+                <sl-option value="median_income"disabled >Median Income</sl-option>
+                <sl-option value="current_population">Current Population</sl-option>
+                <sl-option value="future_population_change" disabled>Future Population Change</sl-option>
+                <sl-option value="home_sales" disabled>Home Sales</sl-option>
+                <sl-option value="median_home_price">Median Home Price</sl-option>
+                <sl-option value="change_in_median_home_price" disabled>Change in Median Home Price</sl-option>
+            </sl-select>
+        </div>
+
+      <!-- vertical spacing -->
+      <br/>
+      <br/>
+
+      <!-- buttons for Carto base map selection -->
+      <div id="basemap-header" style="text-align: center; margin-top: 0px;">
+        <h3>Basemap Theme</h3>
+      </div>
+      <div class="radio-container">
+        <sl-radio-group label="" name="a" value="light">
+          <sl-radio-button value="dark">
+            <sl-icon name="moon"></sl-icon>
+          </sl-radio-button>
+          <sl-radio-button value="light">
+            <sl-icon name="brightness-high"></sl-icon>
+          </sl-radio-button>
+        </sl-radio-group>
+      </div>
+
+      <!-- close button -->
+      <sl-button slot="footer" class="close-button" variant="primary">
+        Close
+      </sl-button>
+    </sl-drawer>
+
+    <!-- open map filter -->
+    <sl-tooltip
+    id="drawerTooltip"
+     content="Open side panel for display options."
+     hoist
+     trigger="manual">
+      <sl-button class="openDrawerBtn" class="openDrawer" variant="plain">
+        <div style="font-size: 15px;">Options</div>
+      </sl-button>
+    </sl-tooltip>
+
+    <!-- logo -->
+    <a href="https://www.nghs.org/" target="_blank">
+        <img src="Assets/nghs_logo.png" alt="Logo" class="nghs-logo">
+    </a>
+
+
+    <!-- tooltip for visits -->
+    <div id="tooltip" style="position: absolute; background: rgba(0,0,0,0.6); color: white; padding: 5px; border-radius: 3px; display: none;">
+        <strong>Visits:</strong> <span id="tooltip-visits"></span><br>
+      </div>
+
+    <!-- Reference the external JavaScript file -->
+    <script src="script.js"></script>
+  </body>
+</html>

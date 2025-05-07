@@ -1,0 +1,22 @@
+{
+"type": "FeatureCollection",
+"name": "GA_counties_centorids",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "Clarke" }, "geometry": { "type": "Point", "coordinates": [ -83.397973028547369, 33.944243012735782 ] } },
+{ "type": "Feature", "properties": { "NAME": "Elbert" }, "geometry": { "type": "Point", "coordinates": [ -82.859267918355727, 34.122364070535241 ] } },
+{ "type": "Feature", "properties": { "NAME": "Madison" }, "geometry": { "type": "Point", "coordinates": [ -83.206278420664759, 34.136140061049609 ] } },
+{ "type": "Feature", "properties": { "NAME": "Oconee" }, "geometry": { "type": "Point", "coordinates": [ -83.416101477115774, 33.831829983435938 ] } },
+{ "type": "Feature", "properties": { "NAME": "White" }, "geometry": { "type": "Point", "coordinates": [ -83.76680638289379, 34.652405654046269 ] } },
+{ "type": "Feature", "properties": { "NAME": "Gwinnett" }, "geometry": { "type": "Point", "coordinates": [ -84.045183348340061, 33.960402500679123 ] } },
+{ "type": "Feature", "properties": { "NAME": "Franklin" }, "geometry": { "type": "Point", "coordinates": [ -83.243695648936239, 34.380490112109278 ] } },
+{ "type": "Feature", "properties": { "NAME": "Hall" }, "geometry": { "type": "Point", "coordinates": [ -83.785057173319075, 34.306299581497314 ] } },
+{ "type": "Feature", "properties": { "NAME": "Stephens" }, "geometry": { "type": "Point", "coordinates": [ -83.279377070689236, 34.574127651525089 ] } },
+{ "type": "Feature", "properties": { "NAME": "Hart" }, "geometry": { "type": "Point", "coordinates": [ -82.959361289631005, 34.351887121102081 ] } },
+{ "type": "Feature", "properties": { "NAME": "Walton" }, "geometry": { "type": "Point", "coordinates": [ -83.747272046026268, 33.763540468263685 ] } },
+{ "type": "Feature", "properties": { "NAME": "Barrow" }, "geometry": { "type": "Point", "coordinates": [ -83.710110810763354, 34.011103509537293 ] } },
+{ "type": "Feature", "properties": { "NAME": "Banks" }, "geometry": { "type": "Point", "coordinates": [ -83.521373280498722, 34.344783589327662 ] } },
+{ "type": "Feature", "properties": { "NAME": "Jackson" }, "geometry": { "type": "Point", "coordinates": [ -83.555434787500873, 34.14523805459189 ] } },
+{ "type": "Feature", "properties": { "NAME": "Habersham" }, "geometry": { "type": "Point", "coordinates": [ -83.515662554303958, 34.629753649337559 ] } }
+]
+}

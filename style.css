@@ -1,0 +1,216 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    overflow: hidden;
+  }
+
+header {
+    background-color: #343a40; 
+    color: #fff;
+    text-align: left;
+    padding: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    opacity: 0.9;
+    border-bottom: 1px solid #efefef;
+}
+
+.nghs-logo {
+  position: absolute;
+  right: 30px;  
+  bottom: 45px;
+  transform: translateY(-50%);  /* Ensures perfect vertical centering */
+  height: 45px;  /* Adjust as needed */
+  width: auto;  /* Maintains aspect ratio */
+  z-index: 2;
+}
+
+/* Base styling: transparent background, blue border */
+sl-button.openDrawerBtn {
+  background-color: #efefef;
+  opacity: var(--opacity-value);
+  color: white;
+  font-size: 20px;
+  border-radius: 10px;
+  border: none;
+  width: 100px;
+  transition: var(--sl-transition-medium) background-color ease, var(--sl-transition-medium) border ease;
+
+  
+  /* Positioning */
+  position: absolute;
+  bottom: 40px;
+  left: 15px;
+  z-index: 99;
+}
+
+/* Hover effect: blue background, white text */
+sl-button.openDrawerBtn::part(base):hover {
+  background-color: #343a40;
+  color: white;
+  border-radius: 10px;
+  border: none;
+}
+
+#geocoder-container {
+  position: absolute;
+  top: 0.5px;
+  right: 0px!important;
+  z-index: 99!important;
+}
+
+#geocoder-container:hover {
+  opacity: 1!important;
+}
+
+#geocoder-container .mapboxgl-ctrl-geocoder input {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* place the geocoder at the top left of the screen */
+.mapboxgl-ctrl-geocoder {
+  width: 80px!important;
+  transition: width 0.3s ease !important;
+  margin-top: 8px!important;
+  margin-right: 20px!important;
+  opacity: var(--opacity-value);
+  z-index: 10!important;
+}
+
+/* Expanded state on focus */
+.mapboxgl-ctrl-geocoder:focus-within {
+  width: 300px!important;
+}
+
+.mapboxgl-popup-content {
+  font-family: "Segoe UI", sans-serif;
+  border-radius: 12px;
+  border: 2px solid #343a40;
+  background-color: #d3d3d3;
+  opacity: 0.9;
+}
+
+.mapboxgl-popup.custom-popup h3 {
+  font-size: 16px;
+  color: #343a40;
+}
+
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  display: none;
+}
+
+.mapboxgl-popup-close-button:focus {
+  outline: none;
+}
+
+#map {
+position: absolute;
+top: 0;
+bottom: 0;
+width: 100%;
+}
+
+/* set global styling variables */
+:root {
+  --opacity-value: 0.90;
+  --topline-margin: 25px;
+} 
+
+#feature-filter + span {
+  position: absolute;
+  right: 20px;
+  color:darkgrey;
+  top: 15px;
+}
+
+.summary-stats {
+  max-width: 300px;
+  position: absolute;
+  top: 365px;
+  left: 84px;
+  background-color: #f0f0f0;
+  border: 0.5px solid lightgray;
+  border-radius: 6px;
+  display: block;
+}
+
+.summary-stats [slot='header'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summary-stats h3 {
+  margin: 0;
+}
+
+/* Google Material UI icons */
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24;
+  vertical-align: middle; /* Align icon with text */
+  margin-left: 4px; /* Optional: Add space between text and icon */
+  line-height: 1; /* Ensures consistent alignment */
+}
+
+/* Center the radio group */
+.radio-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* margin-left: 40px;  */
+  text-align: center;
+}
+
+.radio-container sl-radio-group {
+  text-align: center;
+  width: 100%
+}
+
+#tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: #111;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  max-width: 200px;
+  pointer-events: none;
+  z-index: 10;
+  display: none;
+}
+
+/* Add space after the label inside the radio group */
+.radio-container sl-radio-group::part(form-control-label) {
+  margin-bottom: 10px; /* Adjust the value as needed */
+}
+
+@media screen and (max-width: 768px) {
+
+  /* reposition Filter button to be centered left-to-right */
+  sl-button.openDrawer {
+    bottom: 25px;
+    width: 90px;
+  }
+
+  /* remove the following elements on mobile */
+  .header-logo,
+  .mapboxgl-ctrl-geocoder,
+  .nghs-logo,
+  .svn-logo,
+  #downloadBtn {
+      display: none !important;  /* Hides elements on smaller screens */
+  }
+}
