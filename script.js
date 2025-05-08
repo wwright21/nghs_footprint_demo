@@ -198,17 +198,6 @@ map.on("load", async () => {
     data: "Data/GA_counties.geojson", // adjust path if needed
   });
 
-  // county outlines - white halo
-  map.addLayer({
-    id: "ga-county-outline-halo",
-    type: "line",
-    source: "ga-counties",
-    paint: {
-      "line-color": "#ffffff",
-      "line-width": 4,
-    },
-  });
-
   // county outlines - black
   map.addLayer({
     id: "ga-county-outline",
@@ -339,21 +328,21 @@ const layerStyles = {
   "drivetime-10": {
     type: "line",
     paint: {
-      "line-color": "#000000",
+      "line-color": "#2171b5", // color on load (light basemap)
       "line-width": 1,
     },
   },
   "drivetime-15": {
     type: "line",
     paint: {
-      "line-color": "#000000",
+      "line-color": "#2171b5",
       "line-width": 1,
     },
   },
   "drivetime-30": {
     type: "line",
     paint: {
-      "line-color": "#000000",
+      "line-color": "#2171b5",
       "line-width": 1,
     },
   },
@@ -481,6 +470,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ✅ Update the tile source with new URL
     map.getSource("carto").setTiles([newTileUrl]);
+
+    // Update polygon outline colors based on the basemap
+    const countyOutlineColor = selectedValue === "dark" ? "#ffffff" : "#000000";
+    const drivetimeColor = selectedValue === "dark" ? "#6baed6" : "#2171b5";
+
+    // Check if the layer exists before trying to update it
+    if (map.getLayer("ga-county-outline")) {
+      map.setPaintProperty(
+        "ga-county-outline",
+        "line-color",
+        countyOutlineColor
+      );
+    }
+    if (map.getLayer("drivetime-10")) {
+      map.setPaintProperty("drivetime-10", "line-color", drivetimeColor);
+    }
+    if (map.getLayer("drivetime-15")) {
+      map.setPaintProperty("drivetime-15", "line-color", drivetimeColor);
+    }
+    if (map.getLayer("drivetime-30")) {
+      map.setPaintProperty("drivetime-30", "line-color", drivetimeColor);
+    }
   });
 
   // Show drawer tooltip only when hovering
