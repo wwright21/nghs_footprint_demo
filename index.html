@@ -21,6 +21,10 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.min.js"></script>
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.css" type="text/css">
 
+    <!-- swipe to compare -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css" type="text/css">
+
     <!-- google font -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
@@ -45,8 +49,14 @@
     <!-- container for the geocoder search -->
     <div id="geocoder-container"></div>
 
-    <!-- main map div -->
+    <!-- main map div for single map -->
     <div id="map"></div>
+
+    <!-- container for map comparison -->
+    <div id="comparison-container" style="display: none; position: relative; height: 100%; width: 100%;">
+        <div id="before" style="position: absolute; top: 0; bottom: 0; width: 100%;"></div>
+        <div id="after" style="position: absolute; top: 0; bottom: 0; width: 100%;"></div>
+    </div>
 
     <!-- header -->
     <header>
@@ -55,12 +65,10 @@
 
     <!-- shoelace drawer for filters -->
     <sl-drawer label="" placement="start" class="drawer-placement" hidden>
-        <div id="filter-header" style="text-align: center; margin-top: -30px;">
-            <h3>Filter Patients</h3>
-        </div>
+
 
       <!-- dropdown for map layers -->
-        <sl-select id="departmentSelect" label="By Department:" value="All">
+        <sl-select id="departmentSelect" label="Filter by Department:" value="All"">
             <sl-option value="All">All</sl-option>
             <sl-option value="GHI">GHI</sl-option>
             <sl-option value="Orthopedics">Orthopedics</sl-option>
@@ -80,12 +88,12 @@
 
       <!-- Dropdown that is hidden by default -->
         <div id="comparisonDropdownContainer" style="display: none; margin-top: 30px;">
-            <sl-select id="comparisonSelect" label="Choose Comparison Layer" placeholder="Select layer">
+            <sl-select id="comparisonSelect" label="Layer:" placeholder="Select layer" value="current_population">
                 <sl-option value="median_income"disabled >Median Income</sl-option>
                 <sl-option value="current_population">Current Population</sl-option>
                 <sl-option value="future_population_change" disabled>Future Population Change</sl-option>
                 <sl-option value="home_sales" disabled>Home Sales</sl-option>
-                <sl-option value="median_home_price">Median Home Price</sl-option>
+                <sl-option value="median_home_price">Median Home Sale Price</sl-option>
                 <sl-option value="change_in_median_home_price" disabled>Change in Median Home Price</sl-option>
             </sl-select>
         </div>
@@ -94,9 +102,24 @@
       <br/>
       <br/>
 
+      <!-- drivetime polygon checkboxes -->
+      <div class="drivetime-container">
+        <h3 class="drivetime-header">Show Drivetime Rings</h3>
+
+        <div class="drivetime-checkboxes">
+            <sl-checkbox id="drivetime-10" value="10">10 Minutes</sl-checkbox>
+            <sl-checkbox id="drivetime-15" value="15">15 Minutes</sl-checkbox>
+            <sl-checkbox id="drivetime-30" value="30">30 Minutes</sl-checkbox>
+        </div>
+      </div>
+
+      <!-- vertical spacing -->
+      <br/>
+      <br/>
+
       <!-- buttons for Carto base map selection -->
       <div id="basemap-header" style="text-align: center; margin-top: 0px;">
-        <h3>Basemap Theme</h3>
+        <p style="font-size: 17px; font-weight: 400;">Basemap Theme</p>
       </div>
       <div class="radio-container">
         <sl-radio-group label="" name="a" value="light">

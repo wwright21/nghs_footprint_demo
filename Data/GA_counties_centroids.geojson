@@ -1,0 +1,30 @@
+{
+"type": "FeatureCollection",
+"name": "GA_counties_centroids",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "Morgan" }, "geometry": { "type": "Point", "coordinates": [ -83.492386220718231, 33.590831390454603 ] } },
+{ "type": "Feature", "properties": { "NAME": "Clarke" }, "geometry": { "type": "Point", "coordinates": [ -83.367335884204664, 33.951174812207235 ] } },
+{ "type": "Feature", "properties": { "NAME": "Rockdale" }, "geometry": { "type": "Point", "coordinates": [ -84.026612538945102, 33.654241711977292 ] } },
+{ "type": "Feature", "properties": { "NAME": "Forsyth" }, "geometry": { "type": "Point", "coordinates": [ -84.125024252032176, 34.225521862418809 ] } },
+{ "type": "Feature", "properties": { "NAME": "Elbert" }, "geometry": { "type": "Point", "coordinates": [ -82.840099267061916, 34.116799859917116 ] } },
+{ "type": "Feature", "properties": { "NAME": "Madison" }, "geometry": { "type": "Point", "coordinates": [ -83.209041197750906, 34.127790285331315 ] } },
+{ "type": "Feature", "properties": { "NAME": "Oconee" }, "geometry": { "type": "Point", "coordinates": [ -83.437057766866886, 33.834945479670424 ] } },
+{ "type": "Feature", "properties": { "NAME": "Dawson" }, "geometry": { "type": "Point", "coordinates": [ -84.170639978922537, 34.444304696265476 ] } },
+{ "type": "Feature", "properties": { "NAME": "White" }, "geometry": { "type": "Point", "coordinates": [ -83.747119092911376, 34.64636678829072 ] } },
+{ "type": "Feature", "properties": { "NAME": "Gwinnett" }, "geometry": { "type": "Point", "coordinates": [ -84.023632056317197, 33.961735017921818 ] } },
+{ "type": "Feature", "properties": { "NAME": "Franklin" }, "geometry": { "type": "Point", "coordinates": [ -83.229179248807355, 34.375442502566116 ] } },
+{ "type": "Feature", "properties": { "NAME": "Fulton" }, "geometry": { "type": "Point", "coordinates": [ -84.465028457482404, 33.731089390604296 ] } },
+{ "type": "Feature", "properties": { "NAME": "Hall" }, "geometry": { "type": "Point", "coordinates": [ -83.819685148516612, 34.316895593318115 ] } },
+{ "type": "Feature", "properties": { "NAME": "Oglethorpe" }, "geometry": { "type": "Point", "coordinates": [ -83.080707096438928, 33.880654502037189 ] } },
+{ "type": "Feature", "properties": { "NAME": "Lumpkin" }, "geometry": { "type": "Point", "coordinates": [ -84.002654347277399, 34.572192526522635 ] } },
+{ "type": "Feature", "properties": { "NAME": "Stephens" }, "geometry": { "type": "Point", "coordinates": [ -83.293437065582381, 34.553950502428251 ] } },
+{ "type": "Feature", "properties": { "NAME": "DeKalb" }, "geometry": { "type": "Point", "coordinates": [ -84.226411961607496, 33.771534996438618 ] } },
+{ "type": "Feature", "properties": { "NAME": "Hart" }, "geometry": { "type": "Point", "coordinates": [ -82.964251420635108, 34.350904954162417 ] } },
+{ "type": "Feature", "properties": { "NAME": "Walton" }, "geometry": { "type": "Point", "coordinates": [ -83.733850642855202, 33.781563599103301 ] } },
+{ "type": "Feature", "properties": { "NAME": "Barrow" }, "geometry": { "type": "Point", "coordinates": [ -83.712766623533994, 33.993202408222729 ] } },
+{ "type": "Feature", "properties": { "NAME": "Banks" }, "geometry": { "type": "Point", "coordinates": [ -83.49737571215401, 34.354140117009791 ] } },
+{ "type": "Feature", "properties": { "NAME": "Jackson" }, "geometry": { "type": "Point", "coordinates": [ -83.545190083389656, 34.144201626638377 ] } },
+{ "type": "Feature", "properties": { "NAME": "Habersham" }, "geometry": { "type": "Point", "coordinates": [ -83.531119890141611, 34.63102787977671 ] } }
+]
+}

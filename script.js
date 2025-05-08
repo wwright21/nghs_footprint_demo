@@ -57,9 +57,10 @@ const map = new mapboxgl.Map({
   maxBounds: bounds,
 });
 
+// global variables
 let originalHexGeojson;
 
-// Wait until map has loaded
+// Load stuff onto map when loaded
 map.on("load", async () => {
   // Load the hex geometries
   const hexRes = await fetch("Data/hex_boundaries_reprojected.geojson");
@@ -86,7 +87,7 @@ map.on("load", async () => {
     feature.properties.Visits = visitLookup[hexId] || 0;
   });
 
-  // Create tooltip element -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+  // Create tooltip element
   const tooltip = document.getElementById("tooltip");
 
   let mouseX = 0;
@@ -171,7 +172,7 @@ map.on("load", async () => {
         50,
         "#b30000",
       ],
-      "fill-opacity": 0.4,
+      "fill-opacity": 0.7,
     },
     filter: [">", ["get", "Visits"], 0],
   });
@@ -197,7 +198,7 @@ map.on("load", async () => {
     data: "Data/GA_counties.geojson", // adjust path if needed
   });
 
-  // county outlines white halo
+  // county outlines - white halo
   map.addLayer({
     id: "ga-county-outline-halo",
     type: "line",
@@ -208,7 +209,7 @@ map.on("load", async () => {
     },
   });
 
-  // county outlines
+  // county outlines - black
   map.addLayer({
     id: "ga-county-outline",
     type: "line",
@@ -226,7 +227,7 @@ map.on("load", async () => {
   // county label source
   map.addSource("ga-county-labels", {
     type: "geojson",
-    data: "Data/GA_counties_centorids.geojson",
+    data: "Data/GA_counties_centroids.geojson",
   });
 
   // county labels
@@ -237,7 +238,7 @@ map.on("load", async () => {
     layout: {
       "text-field": ["to-string", ["upcase", ["get", "NAME"]]],
       "text-font": ["Open Sans Bold Italic", "Arial Unicode MS Regular"],
-      "text-size": 14,
+      "text-size": 15,
       "text-allow-overlap": false,
     },
     paint: {
@@ -248,6 +249,7 @@ map.on("load", async () => {
     minzoom: 9.2,
   });
 
+  // Add marker for Jefferson Location
   new mapboxgl.Marker({ color: "#343a40", scale: 1 })
     .setLngLat([-83.5933854224835, 34.10526598277187])
     .setPopup(
@@ -257,6 +259,9 @@ map.on("load", async () => {
     )
     .addTo(map)
     .getElement().style.cursor = "pointer";
+
+  // set up event listeners for drivetime checkboxes
+  setupCheckboxListeners();
 });
 
 // Map scale -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
@@ -289,7 +294,7 @@ const geocoderContainer = geocoder.onAdd(map);
 // append the geocoder container to a separate <div> element
 document.getElementById("geocoder-container").appendChild(geocoderContainer);
 
-// function to load the correct department based on the selection
+// Department choropleth selection -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-
 async function loadDepartmentData(departmentValue) {
   const csvPath = `Data/${departmentValue}.csv`;
   const csvData = await d3.csv(csvPath);
@@ -318,7 +323,7 @@ function updateChoroplethBreaks(geojson) {
 
   if (values.length < 2) return;
 
-  const breaks = ss.jenks(values, 6); // 6-class Jenks
+  const breaks = ss.jenks(values, 5); // set number of breaks using Jenks
 
   const colors = ["#fef0d9", "#fdcc8a", "#fc8d59", "#e34a33", "#b30000"];
   const colorExpression = ["interpolate", ["linear"], ["get", "Visits"]];
@@ -329,6 +334,119 @@ function updateChoroplethBreaks(geojson) {
   map.setPaintProperty("visits-choropleth", "fill-color", colorExpression);
 }
 
+// Drivetime polygons -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+const layerStyles = {
+  "drivetime-10": {
+    type: "line",
+    paint: {
+      "line-color": "#000000",
+      "line-width": 1,
+    },
+  },
+  "drivetime-15": {
+    type: "line",
+    paint: {
+      "line-color": "#000000",
+      "line-width": 1,
+    },
+  },
+  "drivetime-30": {
+    type: "line",
+    paint: {
+      "line-color": "#000000",
+      "line-width": 1,
+    },
+  },
+};
+
+// Define your GeoJSON data paths
+const geoJsonDTPaths = {
+  "drivetime-10": "Data/drivetime_10.geojson",
+  "drivetime-15": "Data/drivetime_15.geojson",
+  "drivetime-30": "Data/drivetime_30.geojson",
+};
+
+// toggle layers based on checkboxes
+const toggleDrivetimeLayer = async (layerId, isChecked) => {
+  const sourceId = `${layerId}-source`;
+
+  if (isChecked) {
+    // Add the layer if it doesn't exist
+    if (!map.getSource(sourceId)) {
+      try {
+        // Fetch the GeoJSON data
+        const response = await fetch(geoJsonDTPaths[layerId]);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch GeoJSON: ${response.statusText}`);
+        }
+        const geoData = await response.json();
+
+        // Add the source
+        map.addSource(sourceId, {
+          type: "geojson",
+          data: geoData,
+        });
+
+        // Add the layer
+        const layerStyle = layerStyles[layerId];
+        if (layerStyle) {
+          map.addLayer({
+            id: layerId,
+            ...layerStyle,
+            source: sourceId,
+          });
+        } else {
+          console.error("Layer style not found:", layerId);
+        }
+      } catch (error) {
+        console.error("Error adding layer:", error);
+      }
+    } else if (!map.getLayer(layerId)) {
+      // If source exists but layer doesn't (rare case)
+      const layerStyle = layerStyles[layerId];
+      map.addLayer({
+        id: layerId,
+        ...layerStyle,
+        source: sourceId,
+      });
+    } else {
+      // Both source and layer exist, just make sure it's visible
+      map.setLayoutProperty(layerId, "visibility", "visible");
+    }
+  } else {
+    // Hide the layer if it exists (don't remove it)
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, "visibility", "none");
+    }
+  }
+};
+
+function setupCheckboxListeners() {
+  // Get checkbox elements
+  const checkbox10 = document.getElementById("drivetime-10");
+  const checkbox15 = document.getElementById("drivetime-15");
+  const checkbox30 = document.getElementById("drivetime-30");
+
+  // Add event listeners for Shoelace checkboxes
+  if (checkbox10) {
+    checkbox10.addEventListener("sl-change", (event) => {
+      toggleDrivetimeLayer("drivetime-10", event.target.checked);
+    });
+  }
+
+  if (checkbox15) {
+    checkbox15.addEventListener("sl-change", (event) => {
+      toggleDrivetimeLayer("drivetime-15", event.target.checked);
+    });
+  }
+
+  if (checkbox30) {
+    checkbox30.addEventListener("sl-change", (event) => {
+      toggleDrivetimeLayer("drivetime-30", event.target.checked);
+    });
+  }
+}
+
 // Wait for the DOM & then do a buncha stuff -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
 document.addEventListener("DOMContentLoaded", () => {
   const drawer = document.querySelector("sl-drawer");
@@ -336,8 +454,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = drawer.querySelector(".close-button");
   const radioGroup = document.querySelector("sl-radio-group");
   const tooltip = document.getElementById("drawerTooltip");
-  const toggle = document.getElementById("compareDemographics");
-  const dropdownContainer = document.getElementById(
+  const compareMapToggle = document.getElementById("compareDemographics");
+  const comparisonDropdownContainer = document.getElementById(
     "comparisonDropdownContainer"
   );
 
@@ -387,9 +505,12 @@ document.addEventListener("DOMContentLoaded", () => {
       loadDepartmentData(department);
     });
 
-  // Conditionally show the Map Comparison dropdown
-  toggle.addEventListener("sl-change", (event) => {
-    const isChecked = event.target.checked;
-    dropdownContainer.style.display = isChecked ? "block" : "none";
+  // when the compareMapToggle is switched on, change display to block for comparisonDropdownContainer
+  compareMapToggle.addEventListener("sl-change", () => {
+    if (compareMapToggle.checked) {
+      comparisonDropdownContainer.style.display = "block";
+    } else {
+      comparisonDropdownContainer.style.display = "none";
+    }
   });
 });
