@@ -198,7 +198,7 @@ map.on("load", async () => {
     data: "Data/GA_counties.geojson", // adjust path if needed
   });
 
-  // county outlines - black
+  // county outlines
   map.addLayer({
     id: "ga-county-outline",
     type: "line",
@@ -213,13 +213,11 @@ map.on("load", async () => {
   map.moveLayer("ga-county-outline-halo");
   map.moveLayer("ga-county-outline");
 
-  // county label source
+  // county text labels
   map.addSource("ga-county-labels", {
     type: "geojson",
     data: "Data/GA_counties_centroids.geojson",
   });
-
-  // county labels
   map.addLayer({
     id: "ga-county-labels",
     type: "symbol",
@@ -235,7 +233,7 @@ map.on("load", async () => {
       "text-halo-color": "#ffffff",
       "text-halo-width": 2,
     },
-    minzoom: 9.2,
+    minzoom: 9,
   });
 
   // Add marker for Jefferson Location

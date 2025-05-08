@@ -31,31 +31,34 @@ header {
   z-index: 2;
 }
 
-/* Base styling: transparent background, blue border */
-sl-button.openDrawerBtn {
+/* Base styling - target the shadow DOM part */
+sl-button.openDrawerBtn::part(base) {
   background-color: #efefef;
   opacity: var(--opacity-value);
-  color: white;
+  color: #343a40;
   font-size: 20px;
   border-radius: 10px;
-  border: none;
+  border: 1px solid #343a40;
   width: 100px;
-  transition: var(--sl-transition-medium) background-color ease, var(--sl-transition-medium) border ease;
+  transition: var(--sl-transition-medium) background-color ease, 
+              var(--sl-transition-medium) border ease,
+              var(--sl-transition-medium) color ease;
+}
 
-  
-  /* Positioning */
+/* Container positioning - keep this on the host element */
+sl-button.openDrawerBtn {
   position: absolute;
   bottom: 40px;
   left: 15px;
   z-index: 99;
 }
 
-/* Hover effect: blue background, white text */
+/* Hover effect - target the same shadow DOM part */
 sl-button.openDrawerBtn::part(base):hover {
   background-color: #343a40;
   color: white;
-  border-radius: 10px;
-  border: none;
+  border-radius: 10px; /* Same as non-hover state */
+  border: 1px solid #efefef;
 }
 
 #geocoder-container {

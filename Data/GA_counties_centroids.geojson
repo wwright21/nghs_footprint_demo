@@ -24,7 +24,7 @@
 { "type": "Feature", "properties": { "NAME": "Walton" }, "geometry": { "type": "Point", "coordinates": [ -83.733850642855202, 33.781563599103301 ] } },
 { "type": "Feature", "properties": { "NAME": "Barrow" }, "geometry": { "type": "Point", "coordinates": [ -83.712766623533994, 33.993202408222729 ] } },
 { "type": "Feature", "properties": { "NAME": "Banks" }, "geometry": { "type": "Point", "coordinates": [ -83.49737571215401, 34.354140117009791 ] } },
-{ "type": "Feature", "properties": { "NAME": "Jackson" }, "geometry": { "type": "Point", "coordinates": [ -83.545190083389656, 34.144201626638377 ] } },
+{ "type": "Feature", "properties": { "NAME": "Jackson" }, "geometry": { "type": "Point", "coordinates": [ -83.544206962166996, 34.164502634238538 ] } },
 { "type": "Feature", "properties": { "NAME": "Habersham" }, "geometry": { "type": "Point", "coordinates": [ -83.531119890141611, 34.63102787977671 ] } }
 ]
 }
