@@ -444,9 +444,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const radioGroup = document.querySelector("sl-radio-group");
   const tooltip = document.getElementById("drawerTooltip");
   const compareMapToggle = document.getElementById("compareDemographics");
-  const comparisonDropdownContainer = document.getElementById(
-    "comparisonDropdownContainer"
-  );
+  const comparisonLayerSelect = document.getElementById("comparisonSelect");
 
   // Open the drawer
   openBtn.addEventListener("click", () => {
@@ -473,7 +471,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Update polygon outline colors based on the basemap
     const countyOutlineColor = selectedValue === "dark" ? "#ffffff" : "#000000";
-    const drivetimeColor = selectedValue === "dark" ? "#6baed6" : "#2171b5";
+    const drivetimeColor = selectedValue === "dark" ? "#deebf7" : "#2171b5";
 
     // Check if the layer exists before trying to update it
     if (map.getLayer("ga-county-outline")) {
@@ -517,11 +515,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   // when the compareMapToggle is switched on, change display to block for comparisonDropdownContainer
-  compareMapToggle.addEventListener("sl-change", () => {
-    if (compareMapToggle.checked) {
-      comparisonDropdownContainer.style.display = "block";
+  compareMapToggle.addEventListener("sl-change", (event) => {
+    // Check if the switch is checked (toggled on)
+    if (event.target.checked) {
+      // Enable the select element by removing the disabled attribute
+      comparisonLayerSelect.removeAttribute("disabled");
     } else {
-      comparisonDropdownContainer.style.display = "none";
+      // Disable the select element again
+      comparisonLayerSelect.setAttribute("disabled", "");
     }
   });
 });
