@@ -59,6 +59,7 @@ const map = new mapboxgl.Map({
 
 // global variables
 let originalHexGeojson;
+let currentTheme = "light"; // Default theme
 
 // Load stuff onto map when loaded
 map.on("load", async () => {
@@ -321,116 +322,81 @@ function updateChoroplethBreaks(geojson) {
   map.setPaintProperty("visits-choropleth", "fill-color", colorExpression);
 }
 
-// Drivetime polygons -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
-const layerStyles = {
-  "drivetime-10": {
-    type: "line",
-    paint: {
-      "line-color": "#2171b5", // color on load (light basemap)
-      "line-width": 1,
-    },
+// Define theme styles - can be outside since it's just data
+const themeStyles = {
+  light: {
+    tileUrl:
+      "https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png",
+    countyOutline: "#000000",
+    drivetime: "#737373",
   },
-  "drivetime-15": {
-    type: "line",
-    paint: {
-      "line-color": "#2171b5",
-      "line-width": 1,
-    },
-  },
-  "drivetime-30": {
-    type: "line",
-    paint: {
-      "line-color": "#2171b5",
-      "line-width": 1,
-    },
+  dark: {
+    tileUrl:
+      "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png",
+    countyOutline: "#ffffff",
+    drivetime: "#d9d9d9",
   },
 };
 
-// Define your GeoJSON data paths
-const geoJsonDTPaths = {
-  "drivetime-10": "Data/drivetime_10.geojson",
-  "drivetime-15": "Data/drivetime_15.geojson",
-  "drivetime-30": "Data/drivetime_30.geojson",
-};
+// Function to update all layer colors based on light / dark theme
+function updateLayerColors(theme) {
+  const styles = themeStyles[theme];
 
-// toggle layers based on checkboxes
-const toggleDrivetimeLayer = async (layerId, isChecked) => {
-  const sourceId = `${layerId}-source`;
+  if (map.getLayer("ga-county-outline")) {
+    map.setPaintProperty(
+      "ga-county-outline",
+      "line-color",
+      styles.countyOutline
+    );
+  }
 
+  const drivetimeLayers = ["drivetime-10", "drivetime-15", "drivetime-30"];
+  drivetimeLayers.forEach((layerId) => {
+    if (map.getLayer(layerId)) {
+      map.setPaintProperty(layerId, "line-color", styles.drivetime);
+    }
+  });
+}
+
+// Handles toggling on / off drivetime layer with correct color
+function toggleDrivetimeLayer(layerId, sourceId, geoData, isChecked) {
   if (isChecked) {
-    // Add the layer if it doesn't exist
-    if (!map.getSource(sourceId)) {
-      try {
-        // Fetch the GeoJSON data
-        const response = await fetch(geoJsonDTPaths[layerId]);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch GeoJSON: ${response.statusText}`);
-        }
-        const geoData = await response.json();
-
-        // Add the source
+    // If the layer doesn't exist yet, add it
+    if (!map.getLayer(layerId)) {
+      // Add source if it doesn't exist
+      if (!map.getSource(sourceId)) {
         map.addSource(sourceId, {
           type: "geojson",
           data: geoData,
         });
-
-        // Add the layer
-        const layerStyle = layerStyles[layerId];
-        if (layerStyle) {
-          map.addLayer({
-            id: layerId,
-            ...layerStyle,
-            source: sourceId,
-          });
-        } else {
-          console.error("Layer style not found:", layerId);
-        }
-      } catch (error) {
-        console.error("Error adding layer:", error);
       }
-    } else if (!map.getLayer(layerId)) {
-      // If source exists but layer doesn't (rare case)
-      const layerStyle = layerStyles[layerId];
+
+      // Get the color based on current theme
+      const styles = themeStyles[currentTheme];
+
+      // Add the layer with the correct color
       map.addLayer({
         id: layerId,
-        ...layerStyle,
+        type: "line",
         source: sourceId,
+        paint: {
+          "line-color": styles.drivetime,
+          "line-width": 1,
+        },
       });
     } else {
-      // Both source and layer exist, just make sure it's visible
+      // If the layer exists, just make it visible
       map.setLayoutProperty(layerId, "visibility", "visible");
+
+      // Update the color based on current theme
+      const styles = themeStyles[currentTheme];
+      map.setPaintProperty(layerId, "line-color", styles.drivetime);
     }
   } else {
-    // Hide the layer if it exists (don't remove it)
+    // Hide the layer if it exists
     if (map.getLayer(layerId)) {
       map.setLayoutProperty(layerId, "visibility", "none");
     }
-  }
-};
-
-function setupCheckboxListeners() {
-  // Get checkbox elements
-  const checkbox10 = document.getElementById("drivetime-10");
-  const checkbox15 = document.getElementById("drivetime-15");
-  const checkbox30 = document.getElementById("drivetime-30");
-
-  // Add event listeners for Shoelace checkboxes
-  if (checkbox10) {
-    checkbox10.addEventListener("sl-change", (event) => {
-      toggleDrivetimeLayer("drivetime-10", event.target.checked);
-    });
-  }
-
-  if (checkbox15) {
-    checkbox15.addEventListener("sl-change", (event) => {
-      toggleDrivetimeLayer("drivetime-15", event.target.checked);
-    });
-  }
-
-  if (checkbox30) {
-    checkbox30.addEventListener("sl-change", (event) => {
-      toggleDrivetimeLayer("drivetime-30", event.target.checked);
-    });
   }
 }
 
@@ -443,6 +409,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const tooltip = document.getElementById("drawerTooltip");
   const compareMapToggle = document.getElementById("compareDemographics");
   const comparisonLayerSelect = document.getElementById("comparisonSelect");
+  const checkbox10 = document.getElementById("drivetime-10");
+  const checkbox15 = document.getElementById("drivetime-15");
+  const checkbox30 = document.getElementById("drivetime-30");
 
   // Open the drawer
   openBtn.addEventListener("click", () => {
@@ -458,43 +427,56 @@ document.addEventListener("DOMContentLoaded", () => {
   radioGroup.addEventListener("sl-change", (event) => {
     const selectedValue = event.target.value;
 
-    // Define the new tile URL based on selection
-    const newTileUrl =
-      selectedValue === "dark"
-        ? "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png";
+    // Update the current theme tracker
+    currentTheme = selectedValue;
 
-    // ✅ Update the tile source with new URL
-    map.getSource("carto").setTiles([newTileUrl]);
+    // Update the tile source with new URL
+    map.getSource("carto").setTiles([themeStyles[selectedValue].tileUrl]);
 
     // Update polygon outline colors based on the basemap
-    const countyOutlineColor = selectedValue === "dark" ? "#ffffff" : "#000000";
-    const drivetimeColor = selectedValue === "dark" ? "#deebf7" : "#2171b5";
-
-    // Check if the layer exists before trying to update it
-    if (map.getLayer("ga-county-outline")) {
-      map.setPaintProperty(
-        "ga-county-outline",
-        "line-color",
-        countyOutlineColor
-      );
-    }
-    if (map.getLayer("drivetime-10")) {
-      map.setPaintProperty("drivetime-10", "line-color", drivetimeColor);
-    }
-    if (map.getLayer("drivetime-15")) {
-      map.setPaintProperty("drivetime-15", "line-color", drivetimeColor);
-    }
-    if (map.getLayer("drivetime-30")) {
-      map.setPaintProperty("drivetime-30", "line-color", drivetimeColor);
-    }
+    updateLayerColors(selectedValue);
   });
+
+  // Add event listeners for drivetime checkboxes
+  if (checkbox10) {
+    checkbox10.addEventListener("sl-change", (event) => {
+      toggleDrivetimeLayer(
+        "drivetime-10",
+        "drivetimeSource-10",
+        "Data/drivetime_10.geojson",
+        event.target.checked
+      );
+    });
+  }
+
+  if (checkbox15) {
+    checkbox15.addEventListener("sl-change", (event) => {
+      toggleDrivetimeLayer(
+        "drivetime-15",
+        "drivetimeSource-15",
+        "Data/drivetime_15.geojson",
+        event.target.checked
+      );
+    });
+  }
+
+  if (checkbox30) {
+    checkbox30.addEventListener("sl-change", (event) => {
+      toggleDrivetimeLayer(
+        "drivetime-30",
+        "drivetimeSource-30",
+        "Data/drivetime_30.geojson",
+        event.target.checked
+      );
+    });
+  }
 
   // Show drawer tooltip only when hovering
   openBtn.addEventListener("mouseenter", () => {
     tooltip.show();
   });
 
+  // Hide drawer tooltip when not hovering
   openBtn.addEventListener("mouseleave", () => {
     tooltip.hide();
   });
