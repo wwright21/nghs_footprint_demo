@@ -119,7 +119,7 @@
 
       <!-- buttons for Carto base map selection -->
       <div id="basemap-header" style="text-align: center; margin-top: 0px;">
-        <p style="font-size: 17px; font-weight: 400;">Basemap Theme</p>
+        <p style="font-size: 17px; font-weight: 400;">Select Map Theme</p>
       </div>
       <div class="radio-container">
         <sl-radio-group label="" name="a" value="light">
@@ -132,22 +132,28 @@
         </sl-radio-group>
       </div>
 
-      <!-- close button -->
-      <sl-button slot="footer" class="close-button" variant="primary">
-        Close
-      </sl-button>
+        <!-- close button -->
+        <sl-button slot="footer" class="close-button" variant="primary">
+            Close
+        </sl-button>
     </sl-drawer>
 
-        <!-- open map filter -->
-        <sl-tooltip
-            id="drawerTooltip"
-            content="Open side panel for display options."
-            hoist
-            trigger="manual">
-            <sl-button class="openDrawerBtn openDrawer" variant="plain">
-                <div style="font-size: 15px;">Options</div>
-            </sl-button>
-        </sl-tooltip>
+    <!-- open map filter -->
+    <sl-tooltip
+        id="drawerTooltip"
+        content="Open side panel for display options."
+        hoist
+        trigger="manual">
+        <sl-button class="openDrawerBtn openDrawer" variant="plain">
+            <div style="font-size: 15px;">Options</div>
+        </sl-button>
+    </sl-tooltip>
+
+    <!-- Legend Container -->
+    <div id="legend" class="legend">
+        <h4>Visits</h4>
+        <div id="legend-items"></div>
+    </div>
 
     <!-- logo -->
     <a href="https://www.nghs.org/" target="_blank">
@@ -158,7 +164,7 @@
     <!-- tooltip for visits -->
     <div id="tooltip" style="position: absolute; background: rgba(0,0,0,0.6); color: white; padding: 5px; border-radius: 3px; display: none;">
         <strong>Visits:</strong> <span id="tooltip-visits"></span><br>
-      </div>
+    </div>
 
     <!-- Reference the external JavaScript file -->
     <script src="script.js"></script>

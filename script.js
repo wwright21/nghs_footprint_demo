@@ -312,14 +312,59 @@ function updateChoroplethBreaks(geojson) {
   if (values.length < 2) return;
 
   const breaks = ss.jenks(values, 5); // set number of breaks using Jenks
-
   const colors = ["#fef0d9", "#fdcc8a", "#fc8d59", "#e34a33", "#b30000"];
+
   const colorExpression = ["interpolate", ["linear"], ["get", "Visits"]];
   for (let i = 1; i < breaks.length; i++) {
     colorExpression.push(breaks[i - 1], colors[i - 1]);
   }
 
   map.setPaintProperty("visits-choropleth", "fill-color", colorExpression);
+
+  // Update the legend
+  updateLegend(breaks, colors);
+}
+
+// Function to update the legend
+function updateLegend(breaks, colors) {
+  const legendItems = document.getElementById("legend-items");
+
+  // Clear existing legend items
+  legendItems.innerHTML = "";
+
+  // Add this function to format numbers with thousands separator
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  // Add legend items
+  for (let i = 0; i < breaks.length - 1; i++) {
+    const item = document.createElement("div");
+    item.className = "legend-item";
+
+    const key = document.createElement("span");
+    key.className = "legend-key";
+    key.style.backgroundColor = colors[i];
+
+    const value = document.createElement("span");
+
+    // Format the range text WITH thousands separator
+    if (i === breaks.length - 2) {
+      // Last item
+      value.textContent = `${formatNumber(Math.round(breaks[i]))}+`;
+    } else {
+      value.textContent = `${formatNumber(
+        Math.round(breaks[i])
+      )} - ${formatNumber(Math.round(breaks[i + 1]))}`;
+    }
+
+    item.appendChild(key);
+    item.appendChild(value);
+    legendItems.appendChild(item);
+  }
+
+  // Show the legend
+  document.getElementById("legend").style.display = "block";
 }
 
 // Define theme styles - can be outside since it's just data
@@ -348,6 +393,16 @@ function updateLayerColors(theme) {
       "line-color",
       styles.countyOutline
     );
+
+    // Update legend appearance for dark/light mode
+    const legend = document.getElementById("legend");
+    if (legend) {
+      if (theme === "dark") {
+        legend.classList.add("dark-mode");
+      } else {
+        legend.classList.remove("dark-mode");
+      }
+    }
   }
 
   const drivetimeLayers = ["drivetime-10", "drivetime-15", "drivetime-30"];
@@ -435,6 +490,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Update polygon outline colors based on the basemap
     updateLayerColors(selectedValue);
+
+    // Update the legend appearance
+    const legend = document.getElementById("legend");
+    if (legend) {
+      if (selectedValue === "dark") {
+        legend.classList.add("dark-mode");
+      } else {
+        legend.classList.remove("dark-mode");
+      }
+    }
+
+    // Update the header appearance
+    const header = document.querySelector("header");
+    if (header) {
+      if (selectedValue === "dark") {
+        header.classList.add("dark-mode");
+      } else {
+        header.classList.remove("dark-mode");
+      }
+    }
   });
 
   // Add event listeners for drivetime checkboxes
