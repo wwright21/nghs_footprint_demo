@@ -39,21 +39,7 @@ header.dark-mode {
   z-index: 2;
 }
 
-/* Base styling - target the shadow DOM part */
-sl-button.openDrawerBtn::part(base) {
-  background-color: #efefef;
-  opacity: var(--opacity-value);
-  color: #343a40;
-  font-size: 20px;
-  border-radius: 10px;
-  border: 1px solid #343a40;
-  width: 125px;
-  transition: var(--sl-transition-medium) background-color ease, 
-              var(--sl-transition-medium) border ease,
-              var(--sl-transition-medium) color ease;
-}
-
-/* Container positioning - keep this on the host element */
+/* Common positioning for the button - applies in both modes */
 sl-button.openDrawerBtn {
   position: absolute;
   bottom: 40px;
@@ -61,11 +47,37 @@ sl-button.openDrawerBtn {
   z-index: 99;
 }
 
-/* Hover effect - target the same shadow DOM part */
-sl-button.openDrawerBtn::part(base):hover {
-  background-color: #343a40;
+/* Light mode styling (default) */
+sl-button.openDrawerBtn::part(base) {
+  background-color: #343a40; /* Dark background in light mode */
   color: white;
-  border-radius: 10px; /* Same as non-hover state */
+  font-size: 20px;
+  border-radius: 10px;
+  border: 1px solid #efefef;
+  width: 148px;
+  transition: var(--sl-transition-medium) background-color ease, 
+              var(--sl-transition-medium) border ease,
+              var(--sl-transition-medium) color ease;
+}
+
+/* Light mode hover effect */
+sl-button.openDrawerBtn::part(base):hover {
+  background-color: #efefef; /* Light background on hover in light mode */
+  color: #343a40;
+  border: 1px solid #343a40;
+}
+
+/* Dark mode styling */
+sl-button.openDrawerBtn.dark-mode::part(base) {
+  background-color: #efefef; /* Light background in dark mode */
+  color: #343a40;
+  border: 1px solid #343a40;
+}
+
+/* Dark mode hover effect */
+sl-button.openDrawerBtn.dark-mode::part(base):hover {
+  background-color: #343a40; /* Dark background on hover in dark mode */
+  color: white;
   border: 1px solid #efefef;
 }
 
@@ -142,27 +154,6 @@ width: 100%;
   top: 15px;
 }
 
-.summary-stats {
-  max-width: 300px;
-  position: absolute;
-  top: 365px;
-  left: 84px;
-  background-color: #f0f0f0;
-  border: 0.5px solid lightgray;
-  border-radius: 6px;
-  display: block;
-}
-
-.summary-stats [slot='header'] {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.summary-stats h3 {
-  margin: 0;
-}
-
 /* Google Material UI icons */
 .material-symbols-outlined {
   font-variation-settings:
@@ -229,22 +220,25 @@ width: 100%;
 
 /* set up the legend */
 .legend {
-  background-color: #efefef;
+  background-color: #343a40;
   opacity: var(--opacity-value);
   border-radius: 10px;
   border: 1px solid #343a40;
   bottom: 98px;
-  font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
   padding: 10px;
   position: absolute;
-  left: 17px;
+  left: 15px;
   z-index: 1;
   text-align: center;
-  width: 102px;
+  width: 125px;
+  color: #fff;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.legend h4 {
+.legend h3 {
   margin: 0 0 10px;
+  font-size: 14px;
 }
 
 .legend-key {
@@ -268,11 +262,69 @@ width: 100%;
   align-items: center;
 }
 
-/* Dark mode */
+/* Legend dark mode */
 .legend.dark-mode {
-  background-color: #222;
-  color: white;
+  background-color: #efefef;
+  color: #343a40;
   border: 1px solid #efefef;
+}
+
+/* style for drivetime stats table */
+.stats-table-container {
+  background-color: #343a40;
+  opacity: var(--opacity-value);
+  border-radius: 10px;
+  border: 1px solid #343a40;
+  font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  padding: 10px;
+  position: absolute;
+  bottom: 290px; /* Adjust based on your layout */
+  left: 15px;
+  z-index: 1;
+  width: 125px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: #fff;
+}
+
+.stats-table-container h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.stats-table-container.dark-mode {
+  background-color: #efefef;
+  color: #343a40;
+  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+#summary-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#summary-stats-table th, 
+#summary-stats-table td {
+  padding: 5px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+#summary-stats-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.dark-mode #summary-stats-table th {
+  background-color: #444;
+}
+
+.dark-mode #summary-stats-table td {
+  border-bottom: 1px solid #555;
+}
+
+#summary-stats-table tr:last-child td {
+  border-bottom: none;
 }
 
 @media screen and (max-width: 768px) {

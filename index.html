@@ -68,7 +68,7 @@
 
 
       <!-- dropdown for map layers -->
-        <sl-select id="departmentSelect" label="Filter by Department:" value="All"">
+        <sl-select id="departmentSelect" label="Filter by Department:" value="All">
             <sl-option value="All">All</sl-option>
             <sl-option value="GHI">GHI</sl-option>
             <sl-option value="Orthopedics">Orthopedics</sl-option>
@@ -86,7 +86,7 @@
             <sl-switch id="compareDemographics">Show Comparison Map</sl-switch>
         </div>
 
-      <!-- Dropdown that is hidden by default -->
+      <!-- Dropdown that is greyed out by default -->
         <div id="comparisonDropdownContainer" style="display: block; margin-top: 30px;">
             <sl-select id="comparisonSelect" label="Comparison layer:" placeholder="Select layer" value="current_population" disabled>
                 <sl-option value="median_income"disabled >Median Income</sl-option>
@@ -108,7 +108,7 @@
 
         <div class="drivetime-checkboxes">
             <sl-checkbox id="drivetime-10" value="10">10 Minutes</sl-checkbox>
-            <sl-checkbox id="drivetime-15" value="15">15 Minutes</sl-checkbox>
+            <sl-checkbox id="drivetime-20" value="20">20 Minutes</sl-checkbox>
             <sl-checkbox id="drivetime-30" value="30">30 Minutes</sl-checkbox>
         </div>
       </div>
@@ -119,7 +119,7 @@
 
       <!-- buttons for Carto base map selection -->
       <div id="basemap-header" style="text-align: center; margin-top: 0px;">
-        <p style="font-size: 17px; font-weight: 400;">Select Map Theme</p>
+        <p style="font-size: 17px; font-weight: 400;">Change Map Theme</p>
       </div>
       <div class="radio-container">
         <sl-radio-group label="" name="a" value="light">
@@ -149,9 +149,22 @@
         </sl-button>
     </sl-tooltip>
 
+    <!-- Drivetime Statistics -->
+    <div id="summary-stats-container" class="stats-table-container">
+        <h3>Visits by Drivetime</h3>
+        <table id="summary-stats-table">
+          <tbody id="summary-stats-body">
+            <tr>
+              <td colspan="2">Select a department to view statistics</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
     <!-- Legend Container -->
     <div id="legend" class="legend">
-        <h4>Visits</h4>
+        <h3>Visits by Hexagon</h3>
         <div id="legend-items"></div>
     </div>
 

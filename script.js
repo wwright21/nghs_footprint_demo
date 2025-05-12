@@ -60,6 +60,7 @@ const map = new mapboxgl.Map({
 // global variables
 let originalHexGeojson;
 let currentTheme = "light"; // Default theme
+let summaryStatsData = null;
 
 // Load stuff onto map when loaded
 map.on("load", async () => {
@@ -211,7 +212,6 @@ map.on("load", async () => {
   });
 
   // Ensure county is above hex choropleth layer
-  map.moveLayer("ga-county-outline-halo");
   map.moveLayer("ga-county-outline");
 
   // county text labels
@@ -247,9 +247,6 @@ map.on("load", async () => {
     )
     .addTo(map)
     .getElement().style.cursor = "pointer";
-
-  // set up event listeners for drivetime checkboxes
-  setupCheckboxListeners();
 });
 
 // Map scale -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
@@ -405,7 +402,7 @@ function updateLayerColors(theme) {
     }
   }
 
-  const drivetimeLayers = ["drivetime-10", "drivetime-15", "drivetime-30"];
+  const drivetimeLayers = ["drivetime-10", "drivetime-20", "drivetime-30"];
   drivetimeLayers.forEach((layerId) => {
     if (map.getLayer(layerId)) {
       map.setPaintProperty(layerId, "line-color", styles.drivetime);
@@ -455,6 +452,152 @@ function toggleDrivetimeLayer(layerId, sourceId, geoData, isChecked) {
   }
 }
 
+// Functions to load update drivetime stats table
+async function loadSummaryStatsData() {
+  try {
+    if (summaryStatsData === null) {
+      const response = await fetch("Data/drivetime-stats.csv");
+      const csvText = await response.text();
+      summaryStatsData = Papa.parse(csvText, {
+        header: true,
+        dynamicTyping: true,
+      }).data;
+    }
+    return summaryStatsData;
+  } catch (error) {
+    console.error("Error loading summary stats:", error);
+    return [];
+  }
+}
+
+// Function to update the summary stats table
+async function updateSummaryStatsTable(departmentValue) {
+  console.log("Updating summary stats for department:", departmentValue);
+
+  // Get the table container and update the title
+  const container = document.getElementById("summary-stats-container");
+  const title = container.querySelector("h3") || document.createElement("h3");
+  title.textContent = "Visits by Drivetime";
+  if (!title.parentElement) {
+    container.prepend(title);
+  }
+
+  // Get the table body element
+  const tableBody = document.getElementById("summary-stats-body");
+
+  // Clear the current table content
+  tableBody.innerHTML = "";
+
+  try {
+    // Load the summary stats data
+    const statsData = await loadSummaryStatsData();
+
+    if (!statsData || statsData.length === 0) {
+      throw new Error("No data available in the CSV");
+    }
+
+    // Find the row for the selected department
+    let departmentRow = null;
+
+    // Try different matching strategies
+    for (const row of statsData) {
+      // Try exact match
+      if (row["Department Name"] === departmentValue) {
+        departmentRow = row;
+        break;
+      }
+
+      // Try with underscores replaced by spaces
+      const departmentWithSpaces = departmentValue.replace(/_/g, " ");
+      if (row["Department Name"] === departmentWithSpaces) {
+        departmentRow = row;
+        break;
+      }
+
+      // Try with spaces replaced by underscores
+      const departmentWithUnderscores = departmentValue.replace(/ /g, "_");
+      if (row["Department Name"] === departmentWithUnderscores) {
+        departmentRow = row;
+        break;
+      }
+    }
+
+    if (departmentRow) {
+      // Create rows for the table in long format
+
+      // 1. Total Visits row
+      const totalRow = document.createElement("tr");
+
+      const totalLabelCell = document.createElement("td");
+      totalLabelCell.textContent = "Total:";
+      totalLabelCell.style.fontWeight = "bold";
+      totalRow.appendChild(totalLabelCell);
+
+      const totalValueCell = document.createElement("td");
+      // Format with thousands separator
+      const totalVisits = departmentRow["total_visits"];
+      totalValueCell.textContent =
+        totalVisits != null
+          ? new Intl.NumberFormat().format(totalVisits)
+          : "N/A";
+      totalRow.appendChild(totalValueCell);
+
+      tableBody.appendChild(totalRow);
+
+      // 2. Drivetime percentage rows
+      const drivetimeData = [
+        { label: "10 min:", column: "in_10_%" },
+        { label: "20 min:", column: "in_20_%" },
+        { label: "30 min:", column: "in_30_%" },
+      ];
+
+      drivetimeData.forEach((item) => {
+        const row = document.createElement("tr");
+
+        const labelCell = document.createElement("td");
+        labelCell.textContent = item.label;
+        row.appendChild(labelCell);
+
+        const valueCell = document.createElement("td");
+        // Format as percentage with 1 decimal place
+        const value = departmentRow[item.column];
+        valueCell.textContent =
+          value != null ? `${parseFloat(value).toFixed(1)}%` : "N/A";
+        row.appendChild(valueCell);
+
+        tableBody.appendChild(row);
+      });
+    } else {
+      // If no matching department is found
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 2; // Changed from 4 to 2 for the new format
+      td.textContent = `No data available for department: ${departmentValue}`;
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    }
+  } catch (error) {
+    console.error("Error updating summary stats table:", error);
+
+    // Show error message in the table
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 2; // Changed from 4 to 2 for the new format
+    td.textContent = `Error loading statistics: ${error.message}`;
+    tr.appendChild(td);
+    tableBody.appendChild(tr);
+  }
+
+  // Apply current theme to the table container
+  if (typeof currentTheme !== "undefined") {
+    if (currentTheme === "dark") {
+      container.classList.add("dark-mode");
+    } else {
+      container.classList.remove("dark-mode");
+    }
+  }
+}
+
 // Wait for the DOM & then do a buncha stuff -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
 document.addEventListener("DOMContentLoaded", () => {
   const drawer = document.querySelector("sl-drawer");
@@ -465,8 +608,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const compareMapToggle = document.getElementById("compareDemographics");
   const comparisonLayerSelect = document.getElementById("comparisonSelect");
   const checkbox10 = document.getElementById("drivetime-10");
-  const checkbox15 = document.getElementById("drivetime-15");
+  const checkbox20 = document.getElementById("drivetime-20");
   const checkbox30 = document.getElementById("drivetime-30");
+  const initialDepartment = "All";
+
+  // Load initial summary stats
+  updateSummaryStatsTable(initialDepartment).catch((error) =>
+    console.error(error)
+  );
 
   // Open the drawer
   openBtn.addEventListener("click", () => {
@@ -491,25 +640,24 @@ document.addEventListener("DOMContentLoaded", () => {
     // Update polygon outline colors based on the basemap
     updateLayerColors(selectedValue);
 
-    // Update the legend appearance
-    const legend = document.getElementById("legend");
-    if (legend) {
-      if (selectedValue === "dark") {
-        legend.classList.add("dark-mode");
-      } else {
-        legend.classList.remove("dark-mode");
-      }
-    }
+    // Update UI elements based on theme
+    const elementsToUpdate = [
+      { selector: "#legend", class: "dark-mode" },
+      { selector: "header", class: "dark-mode" },
+      { selector: "#summary-stats-container", class: "dark-mode" },
+      { selector: ".openDrawerBtn", class: "dark-mode" }, // Add this line
+    ];
 
-    // Update the header appearance
-    const header = document.querySelector("header");
-    if (header) {
-      if (selectedValue === "dark") {
-        header.classList.add("dark-mode");
-      } else {
-        header.classList.remove("dark-mode");
+    elementsToUpdate.forEach((item) => {
+      const element = document.querySelector(item.selector);
+      if (element) {
+        if (selectedValue === "dark") {
+          element.classList.add(item.class);
+        } else {
+          element.classList.remove(item.class);
+        }
       }
-    }
+    });
   });
 
   // Add event listeners for drivetime checkboxes
@@ -524,12 +672,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (checkbox15) {
-    checkbox15.addEventListener("sl-change", (event) => {
+  if (checkbox20) {
+    checkbox20.addEventListener("sl-change", (event) => {
       toggleDrivetimeLayer(
-        "drivetime-15",
-        "drivetimeSource-15",
-        "Data/drivetime_15.geojson",
+        "drivetime-20",
+        "drivetimeSource-20",
+        "Data/drivetime_20.geojson",
         event.target.checked
       );
     });
@@ -566,7 +714,12 @@ document.addEventListener("DOMContentLoaded", () => {
     .querySelector("#departmentSelect")
     .addEventListener("sl-change", (event) => {
       const department = event.target.value;
+
+      // Update the map
       loadDepartmentData(department);
+
+      // Update the statistics table
+      updateSummaryStatsTable(department);
     });
 
   // when the compareMapToggle is switched on, change display to block for comparisonDropdownContainer
