@@ -211,9 +211,6 @@ map.on("load", async () => {
     },
   });
 
-  // Ensure county is above hex choropleth layer
-  map.moveLayer("ga-county-outline");
-
   // county text labels
   map.addSource("ga-county-labels", {
     type: "geojson",
@@ -236,6 +233,10 @@ map.on("load", async () => {
     },
     minzoom: 9,
   });
+
+  // Ensure these layers sit on top
+  map.moveLayer("ga-county-outline");
+  map.moveLayer("ga-county-labels");
 
   // Add marker for Jefferson Location
   new mapboxgl.Marker({ color: "#343a40", scale: 1 })
