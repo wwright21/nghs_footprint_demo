@@ -372,14 +372,14 @@ const themeStyles = {
     tileUrl:
       "https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png",
     countyOutline: "#000000",
-    drivetime: "#737373",
+    drivetime: "#4292c6",
     hexOutline: "#000000",
   },
   dark: {
     tileUrl:
       "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png",
     countyOutline: "#ffffff",
-    drivetime: "#d9d9d9",
+    drivetime: "#4292c6",
     hexOutline: "#f0f0f0",
   },
 };
