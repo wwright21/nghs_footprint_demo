@@ -380,7 +380,7 @@ const themeStyles = {
       "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png",
     countyOutline: "#ffffff",
     drivetime: "#d9d9d9",
-    hexOutline: "#ffffff",
+    hexOutline: "#f0f0f0",
   },
 };
 
@@ -441,7 +441,7 @@ function toggleDrivetimeLayer(layerId, sourceId, geoData, isChecked) {
         source: sourceId,
         paint: {
           "line-color": styles.drivetime,
-          "line-width": 1,
+          "line-width": 2,
         },
       });
     } else {
