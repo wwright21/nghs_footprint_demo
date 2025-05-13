@@ -190,7 +190,7 @@ map.on("load", async () => {
     paint: {
       "line-color": "#252525",
       "line-width": 0.5,
-      "line-opacity": 0.2,
+      "line-opacity": 0.1,
     },
     filter: [">", ["get", "Visits"], 0],
   });
@@ -373,12 +373,14 @@ const themeStyles = {
       "https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png",
     countyOutline: "#000000",
     drivetime: "#737373",
+    hexOutline: "#000000",
   },
   dark: {
     tileUrl:
       "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png",
     countyOutline: "#ffffff",
     drivetime: "#d9d9d9",
+    hexOutline: "#ffffff",
   },
 };
 
@@ -392,15 +394,19 @@ function updateLayerColors(theme) {
       "line-color",
       styles.countyOutline
     );
+  }
 
-    // Update legend appearance for dark/light mode
-    const legend = document.getElementById("legend");
-    if (legend) {
-      if (theme === "dark") {
-        legend.classList.add("dark-mode");
-      } else {
-        legend.classList.remove("dark-mode");
-      }
+  if (map.getLayer("hex-outline")) {
+    map.setPaintProperty("hex-outline", "line-color", styles.hexOutline);
+  }
+
+  // Update legend appearance for dark/light mode
+  const legend = document.getElementById("legend");
+  if (legend) {
+    if (theme === "dark") {
+      legend.classList.add("dark-mode");
+    } else {
+      legend.classList.remove("dark-mode");
     }
   }
 
@@ -647,7 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
       { selector: "#legend", class: "dark-mode" },
       { selector: "header", class: "dark-mode" },
       { selector: "#summary-stats-container", class: "dark-mode" },
-      { selector: ".openDrawerBtn", class: "dark-mode" }, // Add this line
+      { selector: ".openDrawerBtn", class: "dark-mode" },
     ];
 
     elementsToUpdate.forEach((item) => {
