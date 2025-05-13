@@ -174,7 +174,7 @@ map.on("load", async () => {
         50,
         "#b30000",
       ],
-      "fill-opacity": 0.7,
+      "fill-opacity": 0.8,
     },
     filter: [">", ["get", "Visits"], 0],
   });
@@ -190,6 +190,7 @@ map.on("load", async () => {
     paint: {
       "line-color": "#252525",
       "line-width": 0.5,
+      "line-opacity": 0.2,
     },
     filter: [">", ["get", "Visits"], 0],
   });

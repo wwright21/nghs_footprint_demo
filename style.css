@@ -45,6 +45,7 @@ sl-button.openDrawerBtn {
   bottom: 40px;
   left: 15px;
   z-index: 99;
+  opacity: var(--opacity-value);
 }
 
 /* Light mode styling (default) */
@@ -215,7 +216,7 @@ width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 9px;
 }
 
 /* set up the legend */
