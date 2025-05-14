@@ -22,9 +22,16 @@ const bounds = LatLngUtils.reverseBounds(
   [37.00321344128091, -76.06740030653897] // NE
 );
 
+// global variables
+let originalHexGeojson;
+let currentTheme = "light"; // Default theme
+let summaryStatsData = null;
+let map, comparisonMap, compare;
+let comparisonOriginalGeojson;
+
 // -v-v-v-v-v-v-v-v MAPBOX MAP -v-v-v-v-v-v-v-v
-const map = new mapboxgl.Map({
-  container: "map", // container ID
+map = new mapboxgl.Map({
+  container: "before-map", // container ID
   style: {
     version: 8,
     sources: {
@@ -57,15 +64,10 @@ const map = new mapboxgl.Map({
   maxBounds: bounds,
 });
 
-// global variables
-let originalHexGeojson;
-let currentTheme = "light"; // Default theme
-let summaryStatsData = null;
-
 // Load stuff onto map when loaded
 map.on("load", async () => {
   // Load the hex geometries
-  const hexRes = await fetch("Data/hex_boundaries_reprojected.geojson");
+  const hexRes = await fetch("Data/hex_boundaries_comparison.geojson");
   const hexGeoJSON = await hexRes.json();
 
   originalHexGeojson = hexGeoJSON; // store globally for re-use
@@ -195,45 +197,8 @@ map.on("load", async () => {
     filter: [">", ["get", "Visits"], 0],
   });
 
-  // Add county source
-  map.addSource("ga-counties", {
-    type: "geojson",
-    data: "Data/GA_counties.geojson", // adjust path if needed
-  });
-
-  // county outlines
-  map.addLayer({
-    id: "ga-county-outline",
-    type: "line",
-    source: "ga-counties",
-    paint: {
-      "line-color": "#000000",
-      "line-width": 1,
-    },
-  });
-
-  // county text labels
-  map.addSource("ga-county-labels", {
-    type: "geojson",
-    data: "Data/GA_counties_centroids.geojson",
-  });
-  map.addLayer({
-    id: "ga-county-labels",
-    type: "symbol",
-    source: "ga-county-labels",
-    layout: {
-      "text-field": ["to-string", ["upcase", ["get", "NAME"]]],
-      "text-font": ["Open Sans Bold Italic", "Arial Unicode MS Regular"],
-      "text-size": 15,
-      "text-allow-overlap": false,
-    },
-    paint: {
-      "text-color": "#000000",
-      "text-halo-color": "#ffffff",
-      "text-halo-width": 2,
-    },
-    minzoom: 9,
-  });
+  // add common layers
+  addCommonLayers(map, currentTheme);
 
   // Ensure these layers sit on top
   map.moveLayer("ga-county-outline");
@@ -250,6 +215,258 @@ map.on("load", async () => {
     .addTo(map)
     .getElement().style.cursor = "pointer";
 });
+
+// Initialize comparison map
+function initializeComparisonMap() {
+  return new Promise((resolve, reject) => {
+    try {
+      // get current map specs to pass to comparison map
+      const mainMapState = {
+        center: map.getCenter(),
+        zoom: map.getZoom(),
+        pitch: map.getPitch(),
+        bearing: map.getBearing(),
+      };
+
+      comparisonMap = new mapboxgl.Map({
+        container: "after-map",
+        style: {
+          version: 8,
+          sources: {
+            carto: {
+              type: "raster",
+              tiles: [themeStyles[currentTheme].tileUrl],
+              tileSize: 256,
+              attribution:
+                '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+            },
+          },
+          glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+          layers: [
+            {
+              id: "carto-layer",
+              type: "raster",
+              source: "carto",
+              minzoom: 0,
+              maxzoom: 20,
+            },
+          ],
+        },
+        center: mainMapState.center,
+        minZoom: 7, // farthest zoom out
+        zoom: mainMapState.zoom, // starting zoom
+        maxZoom: 15, // farthest zoom in
+        crossOrigin: "anonymous",
+        maxBounds: bounds,
+      });
+
+      // Wait for the comparison map to load
+      comparisonMap.on("load", async () => {
+        const hexResComp = await fetch(
+          "Data/hex_boundaries_comparison.geojson"
+        );
+        const hexGeoJSON = await hexResComp.json();
+        comparisonOriginalGeojson = hexGeoJSON;
+
+        comparisonMap.addSource("comparison-hexes", {
+          type: "geojson",
+          data: comparisonOriginalGeojson,
+        });
+
+        if (!comparisonMap.getLayer("comparison-choropleth")) {
+          comparisonMap.addLayer({
+            id: "comparison-choropleth",
+            type: "fill",
+            source: "comparison-hexes",
+            paint: {
+              "fill-color": "#343a40",
+              "fill-opacity": 0.5,
+            },
+            filter: [">", ["get", "value"], 0],
+          });
+
+          // Add hex outlines
+          comparisonMap.addLayer({
+            id: "comparison-hex-outline",
+            type: "line",
+            source: "comparison-hexes",
+            paint: {
+              "line-color": "#252525",
+              "line-width": 0.5,
+              "line-opacity": 0.1,
+            },
+            filter: [">", ["get", "value"], 0],
+          });
+        }
+
+        // Set default metric
+        const defaultMetric = "current_population";
+
+        // load the default data
+        await loadComparisonLayer(defaultMetric);
+
+        // Add tooltip handler with the default metric
+        addTooltipHandler(
+          comparisonMap,
+          "comparison-choropleth",
+          defaultMetric
+        );
+
+        // Set up tooltip positioning update for the comparison map
+        comparisonMap.on("mousemove", (e) => {
+          if (tooltip.style.display === "block") {
+            tooltip.style.left = `${e.point.x + 10}px`;
+            tooltip.style.top = `${e.point.y + 10}px`;
+          }
+        });
+
+        // Add common layers
+        addCommonLayers(comparisonMap, currentTheme);
+
+        // Add scale control to comparison map
+        const comparisonScale = new mapboxgl.ScaleControl({
+          maxWidth: 175,
+          unit: "imperial",
+        });
+        comparisonMap.addControl(comparisonScale, "bottom-right");
+
+        // Add marker for Jefferson Location
+        new mapboxgl.Marker({ color: "#343a40", scale: 1 })
+          .setLngLat([-83.5933854224835, 34.10526598277187])
+          .setPopup(
+            new mapboxgl.Popup({
+              offset: 38,
+              className: "custom-popup",
+            }).setHTML("<h3>Jefferson Location</h3>")
+          )
+          .addTo(comparisonMap)
+          .getElement().style.cursor = "pointer";
+
+        resolve(comparisonMap);
+      });
+
+      // Handle map load errors
+      comparisonMap.on("error", function (e) {
+        console.error("Comparison map error:", e);
+        reject(e);
+      });
+    } catch (error) {
+      console.error("Error initializing comparison map:", error);
+      reject(error);
+    }
+  });
+}
+
+// function to add layers that will be displayed on both main and comparison map
+function addCommonLayers(mapInstance, theme) {
+  const styles = themeStyles[theme];
+
+  // County outlines
+  if (!mapInstance.getSource("ga-counties")) {
+    mapInstance.addSource("ga-counties", {
+      type: "geojson",
+      data: "Data/GA_counties.geojson",
+    });
+  }
+
+  if (!mapInstance.getLayer("ga-county-outline")) {
+    mapInstance.addLayer({
+      id: "ga-county-outline",
+      type: "line",
+      source: "ga-counties",
+      paint: {
+        "line-color": styles.countyOutline,
+        "line-width": 1,
+      },
+    });
+  }
+
+  // County labels
+  if (!mapInstance.getSource("ga-county-labels")) {
+    mapInstance.addSource("ga-county-labels", {
+      type: "geojson",
+      data: "Data/GA_counties_centroids.geojson",
+    });
+  }
+
+  if (!mapInstance.getLayer("ga-county-labels")) {
+    mapInstance.addLayer({
+      id: "ga-county-labels",
+      type: "symbol",
+      source: "ga-county-labels",
+      layout: {
+        "text-field": ["to-string", ["upcase", ["get", "NAME"]]],
+        "text-font": ["Open Sans Bold Italic", "Arial Unicode MS Regular"],
+        "text-size": 15,
+        "text-allow-overlap": false,
+      },
+      paint: {
+        "text-color": "#000000",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 2,
+      },
+      minzoom: 9,
+    });
+  }
+}
+
+// tooltip labels, legend headers
+const metricLabels = {
+  Visits: "Visits",
+  current_population: "Current Population",
+  median_income: "Median Income",
+  percent_below_poverty: "% Below Poverty Line",
+};
+
+// for legend items in the comparison map
+const currencyPrefixes = {
+  median_income: "$",
+  median_home_price: "$",
+};
+
+// create tooltip for both maps
+function addTooltipHandler(mapInstance, layerId, metricKey) {
+  mapInstance.on("mousemove", layerId, (e) => {
+    if (e.features.length > 0) {
+      const feature = e.features[0];
+
+      // The key issue: you need to access the 'value' property, not the metricKey
+      // In your geojson structure, the actual value is stored in properties.value
+      const value = feature.properties.value;
+
+      // Format value based on metric type
+      let displayValue = "N/A";
+
+      if (value !== null && value !== undefined && value !== 0) {
+        // Apply currency format if needed
+        if (currencyPrefixes[metricKey]) {
+          displayValue = `${
+            currencyPrefixes[metricKey]
+          }${value.toLocaleString()}`;
+        }
+        // Apply percentage format if needed
+        else if (metricKey.includes("percent")) {
+          displayValue = `${value.toLocaleString()}%`;
+        }
+        // Default number format
+        else {
+          displayValue = value.toLocaleString();
+        }
+      }
+
+      const label = metricLabels[metricKey] || metricKey;
+
+      tooltip.innerHTML = `<strong>${label}:</strong> ${displayValue}`;
+      tooltip.style.display = "block";
+      tooltip.style.left = `${e.originalEvent.pageX + 10}px`;
+      tooltip.style.top = `${e.originalEvent.pageY + 10}px`;
+    }
+  });
+
+  mapInstance.on("mouseleave", layerId, () => {
+    tooltip.style.display = "none";
+  });
+}
 
 // Map scale -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
 const scale = new mapboxgl.ScaleControl({
@@ -281,7 +498,7 @@ const geocoderContainer = geocoder.onAdd(map);
 // append the geocoder container to a separate <div> element
 document.getElementById("geocoder-container").appendChild(geocoderContainer);
 
-// Department choropleth selection -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-
+// Department choropleth selection v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-
 async function loadDepartmentData(departmentValue) {
   const csvPath = `Data/${departmentValue}.csv`;
   const csvData = await d3.csv(csvPath);
@@ -366,7 +583,179 @@ function updateLegend(breaks, colors) {
   document.getElementById("legend").style.display = "block";
 }
 
-// Define theme styles - can be outside since it's just data
+// Comparison map choropleth section v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+async function loadComparisonLayer(selectedLayer) {
+  try {
+    const csvPath = `Data/comparison_layers/${selectedLayer}.csv`;
+    const csvData = await d3.csv(csvPath);
+
+    // Lookup values by hex_id
+    const valueLookup = {};
+    csvData.forEach((d) => {
+      valueLookup[d.hex_id] = +d.value;
+    });
+
+    // Clone and augment GeoJSON
+    const updatedGeojson = JSON.parse(
+      JSON.stringify(comparisonOriginalGeojson)
+    );
+    updatedGeojson.features.forEach((f) => {
+      const hexId = f.properties.hex_id;
+      f.properties.value = valueLookup[hexId] || 0;
+
+      // Optionally store the selected metric name as a property
+      // This can be useful for debugging or advanced functionality
+      f.properties.metricName = selectedLayer;
+    });
+
+    // Add source if not yet added
+    if (!comparisonMap.getSource("comparison-hexes")) {
+      comparisonMap.addSource("comparison-hexes", {
+        type: "geojson",
+        data: updatedGeojson,
+      });
+    } else {
+      comparisonMap.getSource("comparison-hexes").setData(updatedGeojson);
+    }
+
+    // Add layer if not yet added
+    if (!comparisonMap.getLayer("comparison-choropleth")) {
+      comparisonMap.addLayer({
+        id: "comparison-choropleth",
+        type: "fill",
+        source: "comparison-hexes",
+        paint: {
+          "fill-color": "#ccc",
+          "fill-opacity": 0.8,
+        },
+        filter: [">", ["get", "value"], 0],
+      });
+    }
+
+    // Compute Jenks breaks
+    const values = updatedGeojson.features
+      .map((f) => f.properties.value)
+      .filter((v) => v > 0);
+
+    if (values.length > 1) {
+      const breaks = ss.jenks(values, 6);
+      const colors = [
+        "#eff3ff",
+        "#c6dbef",
+        "#9ecae1",
+        "#6baed6",
+        "#3182bd",
+        "#08519c",
+      ];
+
+      const colorExpression = ["interpolate", ["linear"], ["get", "value"]];
+      for (let i = 1; i < breaks.length; i++) {
+        colorExpression.push(breaks[i - 1], colors[i - 1]);
+      }
+
+      comparisonMap.setPaintProperty(
+        "comparison-choropleth",
+        "fill-color",
+        colorExpression
+      );
+
+      updateComparisonLegend(breaks, colors, selectedLayer);
+    }
+
+    return true; // Indicate successful completion
+  } catch (error) {
+    console.error("Comparison map error:", error);
+    throw error; // Propagate the error
+  }
+}
+
+// choropleth breaks
+function updateComparisonBreaks(geojson) {
+  const values = geojson.features
+    .map((f) => f.properties.value)
+    .filter((v) => v > 0);
+
+  if (values.length < 2) return;
+
+  const breaks = ss.jenks(values, 5);
+  const colors = ["#edf8fb", "#b3cde3", "#8c96c6", "#8856a7", "#810f7c"];
+
+  const colorExpression = ["interpolate", ["linear"], ["get", "value"]];
+  for (let i = 1; i < breaks.length; i++) {
+    colorExpression.push(breaks[i - 1], colors[i - 1]);
+  }
+
+  comparisonMap.setPaintProperty(
+    "comparison-choropleth",
+    "fill-color",
+    colorExpression
+  );
+}
+
+// Function to update the comparison map when a new metric is selected
+function updateComparisonMetric(selectedMetric) {
+  // Load the data for the selected metric
+  loadComparisonLayer(selectedMetric)
+    .then(() => {
+      // Remove existing tooltip handlers to avoid duplicates
+      comparisonMap.off("mousemove", "comparison-choropleth");
+      comparisonMap.off("mouseleave", "comparison-choropleth");
+
+      // Add new tooltip handler with the updated metric key
+      addTooltipHandler(comparisonMap, "comparison-choropleth", selectedMetric);
+    })
+    .catch((err) => {
+      console.error("Error updating comparison metric:", err);
+    });
+}
+
+// choropleth legend
+function updateComparisonLegend(breaks, colors, selectedMetric) {
+  // Update the legend title using the label map
+  const legendTitleEl = document.getElementById("comparison-legend-title");
+  legendTitleEl.textContent = metricLabels[selectedMetric] || selectedMetric;
+
+  // Determine if the metric has a currency prefix
+  const currencyPrefix = currencyPrefixes[selectedMetric] || "";
+
+  const legendItems = document.getElementById("comparison-legend-items");
+  legendItems.innerHTML = ""; // Clear existing legend items
+
+  const formatNumber = (num) =>
+    num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); // Add commas to numbers
+
+  for (let i = 0; i < breaks.length - 1; i++) {
+    const item = document.createElement("div");
+    item.className = "legend-item";
+
+    const key = document.createElement("span");
+    key.className = "legend-key";
+    key.style.backgroundColor = colors[i];
+
+    const value = document.createElement("span");
+
+    if (i === breaks.length - 2) {
+      // Last item in legend (highest value range)
+      value.textContent = `${currencyPrefix}${formatNumber(
+        Math.round(breaks[i])
+      )}+`;
+    } else {
+      // Regular range item
+      value.textContent = `${currencyPrefix}${formatNumber(
+        Math.round(breaks[i])
+      )} - ${currencyPrefix}${formatNumber(Math.round(breaks[i + 1]))}`;
+    }
+
+    item.appendChild(key);
+    item.appendChild(value);
+    legendItems.appendChild(item);
+  }
+
+  // Show the comparison legend
+  document.getElementById("comparison-legend").style.display = "block";
+}
+
+// Light / Dark theming v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-
 const themeStyles = {
   light: {
     tileUrl:
@@ -388,6 +777,7 @@ const themeStyles = {
 function updateLayerColors(theme) {
   const styles = themeStyles[theme];
 
+  // Primary map
   if (map.getLayer("ga-county-outline")) {
     map.setPaintProperty(
       "ga-county-outline",
@@ -395,9 +785,26 @@ function updateLayerColors(theme) {
       styles.countyOutline
     );
   }
-
   if (map.getLayer("hex-outline")) {
     map.setPaintProperty("hex-outline", "line-color", styles.hexOutline);
+  }
+
+  // Comparison map
+  if (comparisonMap) {
+    if (comparisonMap.getLayer("ga-county-outline")) {
+      comparisonMap.setPaintProperty(
+        "ga-county-outline",
+        "line-color",
+        styles.countyOutline
+      );
+    }
+    if (comparisonMap.getLayer("hex-outline")) {
+      comparisonMap.setPaintProperty(
+        "hex-outline",
+        "line-color",
+        styles.hexOutline
+      );
+    }
   }
 
   // Update legend appearance for dark/light mode
@@ -420,21 +827,26 @@ function updateLayerColors(theme) {
 
 // Handles toggling on / off drivetime layer with correct color
 function toggleDrivetimeLayer(layerId, sourceId, geoData, isChecked) {
+  const styles = themeStyles[currentTheme];
+
   if (isChecked) {
-    // If the layer doesn't exist yet, add it
+    // --- Add source to both maps if it doesn't exist
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, {
+        type: "geojson",
+        data: geoData,
+      });
+    }
+
+    if (comparisonMap && !comparisonMap.getSource(sourceId)) {
+      comparisonMap.addSource(sourceId, {
+        type: "geojson",
+        data: geoData,
+      });
+    }
+
+    // --- Add layer to main map if it doesn't exist
     if (!map.getLayer(layerId)) {
-      // Add source if it doesn't exist
-      if (!map.getSource(sourceId)) {
-        map.addSource(sourceId, {
-          type: "geojson",
-          data: geoData,
-        });
-      }
-
-      // Get the color based on current theme
-      const styles = themeStyles[currentTheme];
-
-      // Add the layer with the correct color
       map.addLayer({
         id: layerId,
         type: "line",
@@ -445,17 +857,35 @@ function toggleDrivetimeLayer(layerId, sourceId, geoData, isChecked) {
         },
       });
     } else {
-      // If the layer exists, just make it visible
       map.setLayoutProperty(layerId, "visibility", "visible");
-
-      // Update the color based on current theme
-      const styles = themeStyles[currentTheme];
       map.setPaintProperty(layerId, "line-color", styles.drivetime);
     }
+
+    // --- Add layer to comparison map if it exists
+    if (comparisonMap) {
+      if (!comparisonMap.getLayer(layerId)) {
+        comparisonMap.addLayer({
+          id: layerId,
+          type: "line",
+          source: sourceId,
+          paint: {
+            "line-color": styles.drivetime,
+            "line-width": 2,
+          },
+        });
+      } else {
+        comparisonMap.setLayoutProperty(layerId, "visibility", "visible");
+        comparisonMap.setPaintProperty(layerId, "line-color", styles.drivetime);
+      }
+    }
   } else {
-    // Hide the layer if it exists
+    // --- Hide layers on both maps if they exist
     if (map.getLayer(layerId)) {
       map.setLayoutProperty(layerId, "visibility", "none");
+    }
+
+    if (comparisonMap && comparisonMap.getLayer(layerId)) {
+      comparisonMap.setLayoutProperty(layerId, "visibility", "none");
     }
   }
 }
@@ -480,8 +910,6 @@ async function loadSummaryStatsData() {
 
 // Function to update the summary stats table
 async function updateSummaryStatsTable(departmentValue) {
-  console.log("Updating summary stats for department:", departmentValue);
-
   // Get the table container and update the title
   const container = document.getElementById("summary-stats-container");
   const title = container.querySelector("h3") || document.createElement("h3");
@@ -620,6 +1048,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const checkbox30 = document.getElementById("drivetime-30");
   const initialDepartment = "All";
 
+  // Hide the after-map initially
+  document.getElementById("after-map").style.display = "none";
+
   // Load initial summary stats
   updateSummaryStatsTable(initialDepartment).catch((error) =>
     console.error(error)
@@ -642,8 +1073,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // Update the current theme tracker
     currentTheme = selectedValue;
 
-    // Update the tile source with new URL
+    // Update the tile source for main map
     map.getSource("carto").setTiles([themeStyles[selectedValue].tileUrl]);
+
+    // Update tile source for after-map, if it exists
+    if (comparisonMap && comparisonMap.getSource("carto")) {
+      comparisonMap
+        .getSource("carto")
+        .setTiles([themeStyles[selectedValue].tileUrl]);
+    }
 
     // Update polygon outline colors based on the basemap
     updateLayerColors(selectedValue);
@@ -651,6 +1089,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Update UI elements based on theme
     const elementsToUpdate = [
       { selector: "#legend", class: "dark-mode" },
+      { selector: "#comparison-legend", class: "dark-mode" },
       { selector: "header", class: "dark-mode" },
       { selector: "#summary-stats-container", class: "dark-mode" },
       { selector: ".openDrawerBtn", class: "dark-mode" },
@@ -732,13 +1171,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // when the compareMapToggle is switched on, change display to block for comparisonDropdownContainer
   compareMapToggle.addEventListener("sl-change", (event) => {
-    // Check if the switch is checked (toggled on)
-    if (event.target.checked) {
-      // Enable the select element by removing the disabled attribute
+    const isChecked = event.target.checked;
+
+    if (isChecked) {
+      // Enable the select element
       comparisonLayerSelect.removeAttribute("disabled");
+
+      // Show the comparison map container
+      document.getElementById("after-map").style.display = "block";
+
+      // Show/hide comparison legend
+      const comparisonLegend = document.getElementById("comparison-legend");
+      comparisonLegend.style.display = "block";
+
+      // Initialize the comparison map if it doesn't exist yet
+      if (!comparisonMap) {
+        initializeComparisonMap()
+          .then(() => {
+            // Create the compare instance after the comparison map is initialized
+            compare = new mapboxgl.Compare(
+              map,
+              comparisonMap,
+              "#comparison-container",
+              {
+                mousemove: false,
+              }
+            );
+          })
+          .catch((error) => {
+            console.error("Error initializing comparison map:", error);
+          });
+      } else {
+        // If the map already exists, just create the compare instance
+        compare = new mapboxgl.Compare(
+          map,
+          comparisonMap,
+          "#comparison-container",
+          {
+            mousemove: false,
+          }
+        );
+      }
     } else {
-      // Disable the select element again
+      // Disable the select element
       comparisonLayerSelect.setAttribute("disabled", "");
+
+      // Remove the compare functionality
+      if (compare) {
+        compare.remove();
+        compare = null;
+      }
+
+      // Hide the comparison map container
+      document.getElementById("after-map").style.display = "none";
+      const comparisonLegend = document.getElementById("comparison-legend");
+      comparisonLegend.style.display = "none";
+    }
+  });
+
+  // update comparison map layer based on dropdown menu selection
+  comparisonLayerSelect.addEventListener("sl-change", (event) => {
+    const selectedLayer = event.target.value;
+    if (comparisonMap && comparisonMap.isStyleLoaded()) {
+      updateComparisonMetric(selectedLayer);
+    } else {
+      console.warn("Comparison map is not ready yet.");
     }
   });
 });

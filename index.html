@@ -49,8 +49,15 @@
     <!-- container for the geocoder search -->
     <div id="geocoder-container"></div>
 
-    <!-- main map div for single map -->
-    <div id="map"></div>
+    <!-- Map container that will hold both maps -->
+    <div id="comparison-container" style="position: relative; width: 100%; height: 100%;">
+      <div id="before-map" class="map"></div>
+      <div id="after-map" class="map"></div>
+      <div id="comparison-legend">
+        <h3 id="comparison-legend-title">Comparison Legend</h3>
+        <div id="comparison-legend-items"></div>
+      </div>
+    </div>
 
     <!-- header -->
     <header>
@@ -83,12 +90,12 @@
       <!-- Dropdown that is greyed out by default -->
         <div id="comparisonDropdownContainer" style="display: block; margin-top: 30px;">
             <sl-select id="comparisonSelect" label="Comparison layer:" placeholder="Select layer" value="current_population" disabled>
-                <sl-option value="median_income"disabled >Median Income</sl-option>
                 <sl-option value="current_population">Current Population</sl-option>
                 <sl-option value="future_population_change" disabled>Future Population Change</sl-option>
                 <sl-option value="home_sales" disabled>Home Sales</sl-option>
-                <sl-option value="median_home_price">Median Home Sale Price</sl-option>
+                <sl-option value="median_home_price" disabled>Median Home Sale Price</sl-option>
                 <sl-option value="change_in_median_home_price" disabled>Change in Median Home Price</sl-option>
+                <sl-option value="median_income">Median Income</sl-option>
             </sl-select>
         </div>
 
@@ -156,11 +163,14 @@
       </div>
 
 
-    <!-- Legend Container -->
+    <!-- Legend Container for main map -->
     <div id="legend" class="legend">
         <h3>Visits by Hexagon</h3>
         <div id="legend-items"></div>
     </div>
+
+    <!-- Comparison map legend (initially hidden) -->
+    <div id="comparison-legend" class="legend" style="position: absolute; bottom: 30px; left: 10px; background: white; padding: 10px; border-radius: 5px; z-index: 1; display: none;"></div>
 
     <!-- logo -->
     <a href="https://www.nghs.org/" target="_blank">

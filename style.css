@@ -1,3 +1,8 @@
+html, body {
+  height: 100%;
+  margin: 0; 
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -135,11 +140,34 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   outline: none;
 }
 
-#map {
-position: absolute;
-top: 0;
-bottom: 0;
-width: 100%;
+/* Map comparison styles */
+.map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Prevent text selection during map interaction */
+#comparison-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+}
+
+/* Prevent text selection during map interaction */
+#comparison-container * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Style the comparison slider */
+.compare-swiper-vertical {
+  background-color: #343a40 !important;
+  opacity: var(--opacity-value) !important;
 }
 
 /* set global styling variables */
@@ -268,6 +296,49 @@ width: 100%;
   background-color: #efefef;
   color: #343a40;
   border: 1px solid #efefef;
+}
+
+#comparison-legend {
+  display: none; 
+  background-color: #343a40;
+  opacity: var(--opacity-value);
+  border-radius: 10px;
+  border: 1px solid #343a40;
+  font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  padding: 10px;
+  position: absolute;
+  top: 70px;
+  right: 20px; /* dynamically anchor to the right edge */
+  z-index: 2;
+  text-align: center;
+  width: auto;
+  color: #fff;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#comparison-legend .legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+#comparison-legend .legend-key {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  display: inline-block;
+}
+
+#comparison-legend.dark-mode {
+  background-color: #efefef;
+  color: #343a40;
+  border: 1px solid #efefef;
+}
+
+#comparison-legend-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  text-align: center;
 }
 
 /* style for drivetime stats table */
