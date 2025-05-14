@@ -1189,13 +1189,19 @@ document.addEventListener("DOMContentLoaded", () => {
       // Show the comparison map container
       document.getElementById("after-map").style.display = "block";
 
-      // Show/hide comparison legend
+      // Conditionally show the comparison legend
       const comparisonLegend = document.getElementById("comparison-legend");
-      comparisonLegend.style.display = "block";
+      if (comparisonLayerSelect.value !== "aerial") {
+        comparisonLegend.style.display = "block";
+      } else {
+        comparisonLegend.style.display = "none";
+      }
+
+      const selectedComparisonLayer = comparisonLayerSelect.value;
 
       // Initialize the comparison map if it doesn't exist yet
       if (!comparisonMap) {
-        initializeComparisonMap("current_population")
+        initializeComparisonMap(selectedComparisonLayer)
           .then(() => {
             // Create the compare instance after the comparison map is initialized
             compare = new mapboxgl.Compare(
@@ -1250,13 +1256,15 @@ document.addEventListener("DOMContentLoaded", () => {
         sources: {
           google: {
             type: "raster",
-            tiles: ["http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}"],
+            tiles: [
+              "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            ],
             tileSize: 256,
           },
         },
         layers: [
           {
-            id: "google-tiles",
+            id: "esri-tiles",
             type: "raster",
             source: "google",
           },
