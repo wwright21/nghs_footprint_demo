@@ -247,6 +247,20 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   gap: 9px;
 }
 
+.dot-header {
+  font-size: 17px;
+  font-weight: 400;
+  text-align: center;
+  margin: 0 0 15px 0;
+}
+
+.dot-checkboxes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
 /* set up the legend */
 .legend {
   background-color: #343a40;
