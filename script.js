@@ -1254,19 +1254,20 @@ document.addEventListener("DOMContentLoaded", () => {
       comparisonMap.setStyle({
         version: 8,
         sources: {
-          google: {
+          aerial: {
             type: "raster",
             tiles: [
-              "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+              "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
             ],
             tileSize: 256,
+            attribution: "Imagery © Esri",
           },
         },
         layers: [
           {
             id: "esri-tiles",
             type: "raster",
-            source: "google",
+            source: "aerial",
           },
         ],
       });
