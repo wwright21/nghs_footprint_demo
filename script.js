@@ -28,6 +28,10 @@ let currentTheme = "light"; // Default theme
 let summaryStatsData = null;
 let map, comparisonMap, compare;
 let comparisonOriginalGeojson;
+let comparisonMarker;
+let previousComparisonLayer = null;
+let currentBreaks = [];
+let currentColors = [];
 
 // -v-v-v-v-v-v-v-v MAPBOX MAP -v-v-v-v-v-v-v-v
 map = new mapboxgl.Map({
@@ -42,7 +46,7 @@ map = new mapboxgl.Map({
         ],
         tileSize: 256,
         attribution:
-          '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+          '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.loopnet.com/commercial-real-estate-brokers/profile/george-hokayem/w7x34gkb", target="_blank">SVN Hokayem Co.</a>',
       },
     },
     glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
@@ -217,15 +221,13 @@ map.on("load", async () => {
 });
 
 // Initialize comparison map
-function initializeComparisonMap() {
+function initializeComparisonMap(comparisonLayer) {
   return new Promise((resolve, reject) => {
     try {
       // get current map specs to pass to comparison map
       const mainMapState = {
         center: map.getCenter(),
         zoom: map.getZoom(),
-        pitch: map.getPitch(),
-        bearing: map.getBearing(),
       };
 
       comparisonMap = new mapboxgl.Map({
@@ -238,7 +240,7 @@ function initializeComparisonMap() {
               tiles: [themeStyles[currentTheme].tileUrl],
               tileSize: 256,
               attribution:
-                '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+                '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.loopnet.com/commercial-real-estate-brokers/profile/george-hokayem/w7x34gkb">SVN Hokayem Co.</a>',
             },
           },
           glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
@@ -300,7 +302,7 @@ function initializeComparisonMap() {
         }
 
         // Set default metric
-        const defaultMetric = "current_population";
+        const defaultMetric = comparisonLayer;
 
         // load the default data
         await loadComparisonLayer(defaultMetric);
@@ -331,7 +333,10 @@ function initializeComparisonMap() {
         comparisonMap.addControl(comparisonScale, "bottom-right");
 
         // Add marker for Jefferson Location
-        new mapboxgl.Marker({ color: "#343a40", scale: 1 })
+        comparisonMarker = new mapboxgl.Marker({
+          color: "#343a40",
+          scale: 1,
+        })
           .setLngLat([-83.5933854224835, 34.10526598277187])
           .setPopup(
             new mapboxgl.Popup({
@@ -339,8 +344,9 @@ function initializeComparisonMap() {
               className: "custom-popup",
             }).setHTML("<h3>Jefferson Location</h3>")
           )
-          .addTo(comparisonMap)
-          .getElement().style.cursor = "pointer";
+          .addTo(comparisonMap);
+
+        comparisonMarker.getElement().style.cursor = "pointer";
 
         resolve(comparisonMap);
       });
@@ -585,87 +591,90 @@ function updateLegend(breaks, colors) {
 
 // Comparison map choropleth section v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
 async function loadComparisonLayer(selectedLayer) {
-  try {
-    const csvPath = `Data/comparison_layers/${selectedLayer}.csv`;
-    const csvData = await d3.csv(csvPath);
+  // if the comparison layer isn't 'aerial', load it
+  if (selectedLayer !== "aerial") {
+    try {
+      const csvPath = `Data/comparison_layers/${selectedLayer}.csv`;
+      const csvData = await d3.csv(csvPath);
 
-    // Lookup values by hex_id
-    const valueLookup = {};
-    csvData.forEach((d) => {
-      valueLookup[d.hex_id] = +d.value;
-    });
-
-    // Clone and augment GeoJSON
-    const updatedGeojson = JSON.parse(
-      JSON.stringify(comparisonOriginalGeojson)
-    );
-    updatedGeojson.features.forEach((f) => {
-      const hexId = f.properties.hex_id;
-      f.properties.value = valueLookup[hexId] || 0;
-
-      // Optionally store the selected metric name as a property
-      // This can be useful for debugging or advanced functionality
-      f.properties.metricName = selectedLayer;
-    });
-
-    // Add source if not yet added
-    if (!comparisonMap.getSource("comparison-hexes")) {
-      comparisonMap.addSource("comparison-hexes", {
-        type: "geojson",
-        data: updatedGeojson,
+      // Lookup values by hex_id
+      const valueLookup = {};
+      csvData.forEach((d) => {
+        valueLookup[d.hex_id] = +d.value;
       });
-    } else {
-      comparisonMap.getSource("comparison-hexes").setData(updatedGeojson);
-    }
 
-    // Add layer if not yet added
-    if (!comparisonMap.getLayer("comparison-choropleth")) {
-      comparisonMap.addLayer({
-        id: "comparison-choropleth",
-        type: "fill",
-        source: "comparison-hexes",
-        paint: {
-          "fill-color": "#ccc",
-          "fill-opacity": 0.8,
-        },
-        filter: [">", ["get", "value"], 0],
+      // Clone and augment GeoJSON
+      const updatedGeojson = JSON.parse(
+        JSON.stringify(comparisonOriginalGeojson)
+      );
+      updatedGeojson.features.forEach((f) => {
+        const hexId = f.properties.hex_id;
+        f.properties.value = valueLookup[hexId] || 0;
+
+        // Optionally store the selected metric name as a property
+        // This can be useful for debugging or advanced functionality
+        f.properties.metricName = selectedLayer;
       });
-    }
 
-    // Compute Jenks breaks
-    const values = updatedGeojson.features
-      .map((f) => f.properties.value)
-      .filter((v) => v > 0);
-
-    if (values.length > 1) {
-      const breaks = ss.jenks(values, 6);
-      const colors = [
-        "#eff3ff",
-        "#c6dbef",
-        "#9ecae1",
-        "#6baed6",
-        "#3182bd",
-        "#08519c",
-      ];
-
-      const colorExpression = ["interpolate", ["linear"], ["get", "value"]];
-      for (let i = 1; i < breaks.length; i++) {
-        colorExpression.push(breaks[i - 1], colors[i - 1]);
+      // Add source if not yet added
+      if (!comparisonMap.getSource("comparison-hexes")) {
+        comparisonMap.addSource("comparison-hexes", {
+          type: "geojson",
+          data: updatedGeojson,
+        });
+      } else {
+        comparisonMap.getSource("comparison-hexes").setData(updatedGeojson);
       }
 
-      comparisonMap.setPaintProperty(
-        "comparison-choropleth",
-        "fill-color",
-        colorExpression
-      );
+      // Add layer if not yet added
+      if (!comparisonMap.getLayer("comparison-choropleth")) {
+        comparisonMap.addLayer({
+          id: "comparison-choropleth",
+          type: "fill",
+          source: "comparison-hexes",
+          paint: {
+            "fill-color": "#ccc",
+            "fill-opacity": 0.8,
+          },
+          filter: [">", ["get", "value"], 0],
+        });
+      }
 
-      updateComparisonLegend(breaks, colors, selectedLayer);
+      // Compute Jenks breaks
+      const values = updatedGeojson.features
+        .map((f) => f.properties.value)
+        .filter((v) => v > 0);
+
+      if (values.length > 1) {
+        const breaks = ss.jenks(values, 6);
+        const colors = [
+          "#eff3ff",
+          "#c6dbef",
+          "#9ecae1",
+          "#6baed6",
+          "#3182bd",
+          "#08519c",
+        ];
+
+        const colorExpression = ["interpolate", ["linear"], ["get", "value"]];
+        for (let i = 1; i < breaks.length; i++) {
+          colorExpression.push(breaks[i - 1], colors[i - 1]);
+        }
+
+        comparisonMap.setPaintProperty(
+          "comparison-choropleth",
+          "fill-color",
+          colorExpression
+        );
+
+        updateComparisonLegend(breaks, colors, selectedLayer);
+      }
+
+      return true; // Indicate successful completion
+    } catch (error) {
+      console.error("Comparison map error:", error);
+      throw error; // Propagate the error
     }
-
-    return true; // Indicate successful completion
-  } catch (error) {
-    console.error("Comparison map error:", error);
-    throw error; // Propagate the error
   }
 }
 
@@ -1186,7 +1195,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Initialize the comparison map if it doesn't exist yet
       if (!comparisonMap) {
-        initializeComparisonMap()
+        initializeComparisonMap("current_population")
           .then(() => {
             // Create the compare instance after the comparison map is initialized
             compare = new mapboxgl.Compare(
@@ -1232,10 +1241,113 @@ document.addEventListener("DOMContentLoaded", () => {
   // update comparison map layer based on dropdown menu selection
   comparisonLayerSelect.addEventListener("sl-change", (event) => {
     const selectedLayer = event.target.value;
-    if (comparisonMap && comparisonMap.isStyleLoaded()) {
-      updateComparisonMetric(selectedLayer);
-    } else {
-      console.warn("Comparison map is not ready yet.");
+
+    // Handle the 'aerial' layer
+    if (selectedLayer === "aerial") {
+      // Remove Carto basemap style and set Google Aerial tiles
+      comparisonMap.setStyle({
+        version: 8,
+        sources: {
+          google: {
+            type: "raster",
+            tiles: ["http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}"],
+            tileSize: 256,
+          },
+        },
+        layers: [
+          {
+            id: "google-tiles",
+            type: "raster",
+            source: "google",
+          },
+        ],
+      });
+
+      // remove comparison legend
+      document.getElementById("comparison-legend").style.display = "none";
+
+      // remove old marker
+      comparisonMarker.remove();
+
+      // add red marker for aerial view
+      comparisonMarker = new mapboxgl.Marker({
+        color: "#ff4d4d", // New color
+        scale: 1,
+      })
+        .setLngLat([-83.5933854224835, 34.10526598277187])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>Jefferson Location</h3>")
+        )
+        .addTo(comparisonMap);
+
+      // Set cursor style
+      comparisonMarker.getElement().style.cursor = "pointer";
+
+      return;
     }
+
+    // Switching away from aerial — reset the style but keep the comparisonMap instance
+    comparisonMap.setStyle({
+      version: 8,
+      sources: {
+        carto: {
+          type: "raster",
+          tiles: [themeStyles[currentTheme].tileUrl],
+          tileSize: 256,
+          attribution:
+            '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.loopnet.com/commercial-real-estate-brokers/profile/george-hokayem/w7x34gkb">SVN Hokayem Co.</a>',
+        },
+      },
+      glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+      layers: [
+        {
+          id: "carto-layer",
+          type: "raster",
+          source: "carto",
+          minzoom: 0,
+          maxzoom: 20,
+        },
+      ],
+    });
+
+    // Wait for style to fully reload
+    comparisonMap.once("styledata", async () => {
+      // Re-add Jefferson marker
+      if (comparisonMarker) comparisonMarker.remove();
+
+      comparisonMarker = new mapboxgl.Marker({
+        color: "#343a40",
+        scale: 1,
+      })
+        .setLngLat([-83.5933854224835, 34.10526598277187])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>Jefferson Location</h3>")
+        )
+        .addTo(comparisonMap);
+
+      comparisonMarker.getElement().style.cursor = "pointer";
+
+      // Re-add any common layers like boundaries, outlines, etc.
+      addCommonLayers(comparisonMap, currentTheme);
+
+      // Re-add the data layer
+      await loadComparisonLayer(selectedLayer);
+
+      // show in the console the layers in the comparisonMap
+      comparisonMap.moveLayer("ga-county-outline");
+      comparisonMap.moveLayer("ga-county-labels");
+
+      // Rebind tooltip
+      addTooltipHandler(comparisonMap, "comparison-choropleth", selectedLayer);
+
+      // Update legend
+      updateComparisonLegend(breaks, colors, selectedLayer);
+    });
   });
 });
