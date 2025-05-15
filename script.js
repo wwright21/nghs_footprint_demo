@@ -325,6 +325,10 @@ function initializeComparisonMap(comparisonLayer) {
         // Add common layers
         addCommonLayers(comparisonMap, currentTheme);
 
+        // Check if drivetime layers are already enabled on the main map
+        // and add them to the comparison map if they are
+        checkAndAddEnabledLayers();
+
         // Add scale control to comparison map
         const comparisonScale = new mapboxgl.ScaleControl({
           maxWidth: 175,
@@ -413,6 +417,40 @@ function addCommonLayers(mapInstance, theme) {
       },
       minzoom: 9,
     });
+  }
+}
+
+// Function to check for enabled layers and add them to the comparison map
+function checkAndAddEnabledLayers() {
+  // Check if the 10-minute drivetime checkbox is checked
+  const checkbox10 = document.getElementById("drivetime-10");
+  if (checkbox10 && checkbox10.checked) {
+    toggleDrivetimeLayer(
+      "drivetime-10",
+      "drivetimeSource-10",
+      "Data/drivetime_10.geojson",
+      true
+    );
+  }
+
+  const checkbox20 = document.getElementById("drivetime-20");
+  if (checkbox20 && checkbox20.checked) {
+    toggleDrivetimeLayer(
+      "drivetime-20",
+      "drivetimeSource-20",
+      "Data/drivetime_20.geojson",
+      true
+    );
+  }
+
+  const checkbox30 = document.getElementById("drivetime-30");
+  if (checkbox30 && checkbox30.checked) {
+    toggleDrivetimeLayer(
+      "drivetime-30",
+      "drivetimeSource-30",
+      "Data/drivetime_30.geojson",
+      true
+    );
   }
 }
 
@@ -1043,6 +1081,92 @@ async function updateSummaryStatsTable(departmentValue) {
   }
 }
 
+// Function to load DOT layer data
+function loadDOTLayer(layerId, map) {
+  // Path to the GeoJSON file
+  const dataPath = `Data/${layerId}.geojson`;
+
+  // Fetch and add the data
+  fetch(dataPath)
+    .then((response) => response.json())
+    .then((data) => {
+      // Add as a source
+      if (map.getSource(layerId)) {
+        map.removeSource(layerId);
+      }
+
+      map.addSource(layerId, {
+        type: "geojson",
+        data: data,
+      });
+
+      // Add as a layer with appropriate styling
+      if (map.getLayer(layerId)) {
+        map.removeLayer(layerId);
+      }
+
+      map.addLayer({
+        id: layerId,
+        type: "line",
+        source: layerId,
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": layerId === "dot-uc" ? "#FF6B6B" : "#4ECDC4", // Different colors for each layer
+          "line-width": 6,
+        },
+      });
+
+      // Create a popup but don't add it to the map yet
+      const popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+      });
+
+      // Change cursor to pointer when hovering over a line
+      map.on("mouseenter", layerId, (e) => {
+        map.getCanvas().style.cursor = "pointer";
+
+        // Get the description from the feature
+        const feature = e.features[0];
+        const description = feature.properties.Desc_short;
+
+        // Create popup content
+        const popupContent = `
+          <div>
+            <p>${description}</p>
+            <p><i>Click on project for more information</i></p>
+          </div>
+        `;
+
+        // Set popup coordinates and content
+        popup.setLngLat(e.lngLat).setHTML(popupContent).addTo(map);
+      });
+
+      // Reset cursor and remove popup when mouse leaves the line
+      map.on("mouseleave", layerId, () => {
+        map.getCanvas().style.cursor = "";
+        popup.remove();
+      });
+
+      // Handle click to open URL in a new tab
+      map.on("click", layerId, (e) => {
+        const feature = e.features[0];
+        const url = feature.properties.URL;
+
+        // Check if URL exists and open in a new tab
+        if (url) {
+          window.open(url, "_blank");
+        }
+      });
+    })
+    .catch((error) => {
+      console.error(`Error loading ${layerId} data:`, error);
+    });
+}
+
 // Wait for the DOM & then do a buncha stuff -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
 document.addEventListener("DOMContentLoaded", () => {
   const drawer = document.querySelector("sl-drawer");
@@ -1272,6 +1396,25 @@ document.addEventListener("DOMContentLoaded", () => {
         ],
       });
 
+      // Wait for the style to finish loading before adding layers back
+      comparisonMap.once("style.load", () => {
+        // Add county outlines
+        comparisonMap.addSource("ga-counties", {
+          type: "geojson",
+          data: "Data/GA_counties.geojson",
+        });
+
+        comparisonMap.addLayer({
+          id: "ga-county-outline",
+          type: "line",
+          source: "ga-counties",
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 1,
+          },
+        });
+      });
+
       // remove comparison legend
       document.getElementById("comparison-legend").style.display = "none";
 
@@ -1296,6 +1439,14 @@ document.addEventListener("DOMContentLoaded", () => {
       comparisonMarker.getElement().style.cursor = "pointer";
 
       return;
+    }
+
+    // Handle the new polyline layers
+    else if (selectedLayer === "dot-uc" || selectedLayer === "dot-pre") {
+      // Add the DOT layer, depending on the selected layer
+      loadDOTLayer(selectedLayer, comparisonMap);
+      // remove comparison legend
+      document.getElementById("comparison-legend").style.display = "none";
     }
 
     // Switching away from aerial — reset the style but keep the comparisonMap instance
