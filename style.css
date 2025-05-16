@@ -47,7 +47,7 @@ header.dark-mode {
 /* Common positioning for the button - applies in both modes */
 sl-button.openDrawerBtn {
   position: absolute;
-  bottom: 40px;
+  bottom: 30px;
   left: 15px;
   z-index: 99;
   opacity: var(--opacity-value);
@@ -125,6 +125,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   border: 2px solid #343a40;
   background-color: #d3d3d3;
   opacity: 0.9;
+  padding: 10px;
 }
 
 .mapboxgl-popup.custom-popup h3 {
@@ -196,17 +197,24 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 }
 
 /* Center the radio group */
-.radio-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* margin-left: 40px;  */
+#theme-toggle-container {
   text-align: center;
+  position: absolute;
+  /* center align the radio group */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99;
+  opacity: var(--opacity-value); /* Ensure --opacity-value is defined */
 }
 
-.radio-container sl-radio-group {
+#theme-radio-container sl-radio-group {
   text-align: center;
-  width: 100%
+  width: 100%;
+}
+
+/* Add space after the label inside the radio group */
+#theme-radio-container sl-radio-group::part(form-control-label) {
+  margin-bottom: 10px;
 }
 
 #tooltip {
@@ -224,13 +232,10 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   display: none;
 }
 
-/* Add space after the label inside the radio group */
-.radio-container sl-radio-group::part(form-control-label) {
-  margin-bottom: 10px; /* Adjust the value as needed */
-}
-
 .drivetime-container {
   margin-top: 20px;
+  align-items: center;
+  text-align: center;
 }
 
 .drivetime-header {
@@ -242,8 +247,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 
 .drivetime-checkboxes {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
   gap: 9px;
 }
 
@@ -267,7 +271,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   opacity: var(--opacity-value);
   border-radius: 10px;
   border: 1px solid #343a40;
-  bottom: 98px;
+  bottom: 88px;
   font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
   padding: 10px;
   position: absolute;
@@ -282,6 +286,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 .legend h3 {
   margin: 0 0 10px;
   font-size: 14px;
+  font-weight: bold;
 }
 
 .legend-key {
@@ -352,29 +357,29 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 #comparison-legend-title {
   margin: 0 0 10px;
   font-size: 14px;
+  font-weight: bold;
   text-align: center;
 }
 
 /* style for drivetime stats table */
 .stats-table-container {
-  background-color: #343a40;
-  opacity: var(--opacity-value);
-  border-radius: 10px;
-  border: 1px solid #343a40;
-  font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  background-color: none;
+  border-radius: 6px;
+  border: 1px solid #e4e4e6;
+  font: 15px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
   padding: 10px;
-  position: absolute;
-  bottom: 290px; /* Adjust based on your layout */
-  left: 15px;
   z-index: 1;
-  width: 125px;
+  width: auto;
+  height: auto;
   transition: background-color 0.3s ease, color 0.3s ease;
-  color: #fff;
+  color: #343a40;
+  margin-left: 20px;
+  margin-right: 20px;
 }
 
 .stats-table-container h3 {
-  margin: 0 0 10px;
-  font-size: 14px;
+  margin: 0 0 50px;
+  font-size: 16px;
   text-align: center;
 }
 
@@ -399,14 +404,6 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 #summary-stats-table th {
   background-color: #f2f2f2;
   font-weight: bold;
-}
-
-.dark-mode #summary-stats-table th {
-  background-color: #444;
-}
-
-.dark-mode #summary-stats-table td {
-  border-bottom: 1px solid #555;
 }
 
 #summary-stats-table tr:last-child td {

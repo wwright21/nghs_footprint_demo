@@ -69,6 +69,7 @@
 
 
       <!-- dropdown for map layers -->
+      <div id="departmentDropdownContainer">
         <sl-select id="departmentSelect" label="Filter by Department:" value="All">
             <sl-option value="All">All</sl-option>
             <sl-option value="GHI">GHI</sl-option>
@@ -77,30 +78,34 @@
             <sl-option value="Surgical_Associates">Surgical Associates</sl-option>
             <sl-option value="Urgent_Care">Urgent Care</sl-option>
         </sl-select>
+      </div>
       
-    <!-- vertical spacing -->
-    <br/>
-    <br/>
+      <!-- vertical spacing -->
+      <br/>
+      <br/>
 
-        <!-- toggle for demographic compare -->
-        <div style="text-align: center; margin-top: 10px;">
-            <sl-switch id="compareDemographics">Show Comparison Map</sl-switch>
-        </div>
+      <!-- toggle for demographic compare -->
+      <div style="text-align: center; margin-top: 10px;">
+        <sl-tooltip content="Toggle on a sideview map of demographics">
+          <sl-switch id="compareDemographics">Show Comparison Map</sl-switch>
+        </sl-tooltip>
+      </div>
 
-      <!-- Dropdown that is greyed out by default -->
-        <div id="comparisonDropdownContainer" style="display: block; margin-top: 30px;">
-            <sl-select id="comparisonSelect" label="Comparison layer:" placeholder="Select layer" value="current_population" disabled>
-                <sl-option value="aerial">Blank / Aerial</sl-option>  
-                <sl-option value="current_population">Current Population</sl-option>
-                <sl-option value="future_population_change" disabled>Future Population Change</sl-option>
-                <sl-option value="home_sales" disabled>Home Sales</sl-option>
-                <sl-option value="median_home_price" disabled>Median Home Sale Price</sl-option>
-                <sl-option value="change_in_median_home_price" disabled>Change in Median Home Price</sl-option>
-                <sl-option value="median_income">Median Income</sl-option>
-                <sl-option value="dot-uc">DOT Projects, Under Construction</sl-option>
-                <sl-option value="dot-pre">DOT Projects, Pre Construction</sl-option>
-            </sl-select>
-        </div>
+    <!-- Dropdown that is greyed out by default -->
+      <div id="comparisonDropdownContainer" style="display: block; margin-top: 30px;">
+          <sl-select id="comparisonSelect" label="Comparison layer:" placeholder="Select layer" value="current_population" disabled>
+              <sl-option value="aerial">Blank - Aerial</sl-option>
+              <sl-option value="streets">Blank - Streets</sl-option>  
+              <sl-option value="current_population">Current Population</sl-option>
+              <sl-option value="future_population_change" disabled>Future Population Change</sl-option>
+              <sl-option value="home_sales" disabled>Home Sales</sl-option>
+              <sl-option value="median_home_price" disabled>Median Home Sale Price</sl-option>
+              <sl-option value="change_in_median_home_price" disabled>Change in Median Home Price</sl-option>
+              <sl-option value="median_income">Median Income</sl-option>
+              <sl-option value="dot-uc">DOT Projects, Under Construction</sl-option>
+              <sl-option value="dot-pre">DOT Projects, Pre Construction</sl-option>
+          </sl-select>
+      </div>
 
       <!-- vertical spacing -->
       <br/>
@@ -108,12 +113,12 @@
 
       <!-- drivetime polygon checkboxes -->
       <div class="drivetime-container">
-        <h3 class="drivetime-header">Drivetime Layers From Facility</h3>
+        <h3 class="drivetime-header">Drivetime From Facility (Minutes)</h3>
 
         <div class="drivetime-checkboxes">
-            <sl-checkbox id="drivetime-10" value="10">10 Minutes</sl-checkbox>
-            <sl-checkbox id="drivetime-20" value="20">20 Minutes</sl-checkbox>
-            <sl-checkbox id="drivetime-30" value="30">30 Minutes</sl-checkbox>
+          <sl-checkbox id="drivetime-10" value="10">10</sl-checkbox>
+          <sl-checkbox id="drivetime-20" value="20">20</sl-checkbox>
+          <sl-checkbox id="drivetime-30" value="30">30</sl-checkbox>
         </div>
       </div>
 
@@ -121,20 +126,41 @@
       <br/>
       <br/>
 
-      <!-- buttons for Carto base map selection -->
-      <div id="basemap-header" style="text-align: center; margin-top: 0px;">
-        <p style="font-size: 17px; font-weight: 400;">Change Map Theme</p>
+       <!-- Drivetime Statistics -->
+    <div id="summary-stats-container" class="stats-table-container">
+        <h3 style="margin-bottom: 10px;">Visits by Drivetime</h3>
+        <table id="summary-stats-table">
+          <tbody id="summary-stats-body">
+            <tr>
+              <td colspan="3">Select a department to view statistics</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="radio-container">
-        <sl-radio-group label="" name="a" value="light">
-          <sl-radio-button value="dark">
-            <sl-icon name="moon"></sl-icon>
-          </sl-radio-button>
-          <sl-radio-button value="light">
-            <sl-icon name="brightness-high"></sl-icon>
-          </sl-radio-button>
-        </sl-radio-group>
+
+       <!-- vertical spacing -->
+      <br/>
+      <br/>
+
+       <!-- buttons for Carto base map selection -->
+      <div id="theme-toggle-container" style="text-align: center; margin-top: 0px;">
+      
+        <div id="theme-radio-container">
+          <sl-radio-group label="" name="a" value="light">
+            <sl-tooltip content="Activate dark basemap">
+            <sl-radio-button value="dark">
+              <sl-icon name="moon"></sl-icon>
+            </sl-radio-button>
+            </sl-tooltip>
+            <sl-tooltip content="Activate light basemap">
+            <sl-radio-button value="light">
+              <sl-icon name="brightness-high"></sl-icon>
+            </sl-radio-button>
+            </sl-tooltip>
+          </sl-radio-group>
+        </div>
       </div>
+
 
         <!-- close button -->
         <sl-button slot="footer" class="close-button" variant="primary">
@@ -145,7 +171,7 @@
     <!-- open map filter -->
     <sl-tooltip
         id="drawerTooltip"
-        content="Open side panel for display options."
+        content="Open side panel for options and stats."
         hoist
         trigger="manual">
         <sl-button class="openDrawerBtn openDrawer" variant="plain">
@@ -153,22 +179,12 @@
         </sl-button>
     </sl-tooltip>
 
-    <!-- Drivetime Statistics -->
-    <div id="summary-stats-container" class="stats-table-container">
-        <h3>Visits by Drivetime</h3>
-        <table id="summary-stats-table">
-          <tbody id="summary-stats-body">
-            <tr>
-              <td colspan="2">Select a department to view statistics</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+   
 
 
     <!-- Legend Container for main map -->
     <div id="legend" class="legend">
-        <h3>Visits by Hexagon</h3>
+        <div id="legend-title" style="margin-bottom: 10px; font-weight: bold;"><h3>Placeholder</h3></div>
         <div id="legend-items"></div>
     </div>
 

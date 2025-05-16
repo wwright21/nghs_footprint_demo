@@ -218,6 +218,39 @@ map.on("load", async () => {
     )
     .addTo(map)
     .getElement().style.cursor = "pointer";
+
+  // add NGMC - Barrow marker
+  new mapboxgl.Marker({ color: "#989300", scale: 1 })
+    .setLngLat([-83.70763029985775, 34.008182535194734])
+    .setPopup(
+      new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
+        "<h3>NGMC - Barrow</h3>"
+      )
+    )
+    .addTo(map)
+    .getElement().style.cursor = "pointer";
+
+  // add NGMC - Barrow marker
+  new mapboxgl.Marker({ color: "#989300", scale: 1 })
+    .setLngLat([-83.75981523447074, 33.94135725379736])
+    .setPopup(
+      new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
+        "<h3>NGPG Urgent Care</h3>"
+      )
+    )
+    .addTo(map)
+    .getElement().style.cursor = "pointer";
+
+  // add NGMC - Barrow marker
+  new mapboxgl.Marker({ color: "#989300", scale: 1 })
+    .setLngLat([-83.70610860246691, 34.10829863586579])
+    .setPopup(
+      new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
+        "<h3>NGPG West Jackson</h3>"
+      )
+    )
+    .addTo(map)
+    .getElement().style.cursor = "pointer";
 });
 
 // Initialize comparison map
@@ -351,6 +384,42 @@ function initializeComparisonMap(comparisonLayer) {
           .addTo(comparisonMap);
 
         comparisonMarker.getElement().style.cursor = "pointer";
+
+        // add NGMC - Barrow marker
+        new mapboxgl.Marker({ color: "#989300", scale: 1 })
+          .setLngLat([-83.70763029985775, 34.008182535194734])
+          .setPopup(
+            new mapboxgl.Popup({
+              offset: 38,
+              className: "custom-popup",
+            }).setHTML("<h3>NGMC - Barrow</h3>")
+          )
+          .addTo(comparisonMap)
+          .getElement().style.cursor = "pointer";
+
+        // add NGMC - Barrow marker
+        new mapboxgl.Marker({ color: "#989300", scale: 1 })
+          .setLngLat([-83.75981523447074, 33.94135725379736])
+          .setPopup(
+            new mapboxgl.Popup({
+              offset: 38,
+              className: "custom-popup",
+            }).setHTML("<h3>NGPG Urgent Care</h3>")
+          )
+          .addTo(comparisonMap)
+          .getElement().style.cursor = "pointer";
+
+        // add NGMC - Barrow marker
+        new mapboxgl.Marker({ color: "#989300", scale: 1 })
+          .setLngLat([-83.70610860246691, 34.10829863586579])
+          .setPopup(
+            new mapboxgl.Popup({
+              offset: 38,
+              className: "custom-popup",
+            }).setHTML("<h3>NGPG West Jackson</h3>")
+          )
+          .addTo(comparisonMap)
+          .getElement().style.cursor = "pointer";
 
         resolve(comparisonMap);
       });
@@ -560,11 +629,11 @@ async function loadDepartmentData(departmentValue) {
   });
 
   map.getSource("hexes").setData(updatedGeojson);
-  updateChoroplethBreaks(updatedGeojson);
+  updateChoroplethBreaks(updatedGeojson, departmentValue);
 }
 
 // Dynamically update the choropleth breaks based on the data
-function updateChoroplethBreaks(geojson) {
+function updateChoroplethBreaks(geojson, departmentValue) {
   const values = geojson.features
     .map((f) => f.properties.Visits)
     .filter((v) => v > 0);
@@ -582,11 +651,11 @@ function updateChoroplethBreaks(geojson) {
   map.setPaintProperty("visits-choropleth", "fill-color", colorExpression);
 
   // Update the legend
-  updateLegend(breaks, colors);
+  updateLegend(breaks, colors, departmentValue);
 }
 
 // Function to update the legend
-function updateLegend(breaks, colors) {
+function updateLegend(breaks, colors, departmentValue) {
   const legendItems = document.getElementById("legend-items");
 
   // Clear existing legend items
@@ -596,6 +665,19 @@ function updateLegend(breaks, colors) {
   const formatNumber = (num) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
+
+  // Set department in legend title
+  const departmentLabels = {
+    Surgical_Associates: "Surgical Associates",
+    Urgent_Care: "Urgent Care",
+  };
+
+  const departmentDisplayLabel =
+    departmentLabels[departmentValue] || departmentValue;
+
+  document.getElementById(
+    "legend-title"
+  ).innerHTML = `Visits by Hexagon <br/>(${departmentDisplayLabel})`;
 
   // Add legend items
   for (let i = 0; i < breaks.length - 1; i++) {
@@ -629,8 +711,8 @@ function updateLegend(breaks, colors) {
 
 // Comparison map choropleth section v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
 async function loadComparisonLayer(selectedLayer) {
-  // if the comparison layer isn't 'aerial', load it
-  if (selectedLayer !== "aerial") {
+  // if the comparison layer isn't 'aerial' or 'streets', load it
+  if (selectedLayer !== "aerial" && selectedLayer !== "streets") {
     try {
       const csvPath = `Data/comparison_layers/${selectedLayer}.csv`;
       const csvData = await d3.csv(csvPath);
@@ -957,10 +1039,21 @@ async function loadSummaryStatsData() {
 
 // Function to update the summary stats table
 async function updateSummaryStatsTable(departmentValue) {
+  // Format the department name for display
+  let displayDepartmentName = departmentValue;
+  if (displayDepartmentName.includes("_")) {
+    displayDepartmentName = displayDepartmentName.replace(/_/g, " ");
+  }
+  // Capitalize first letter of each word
+  displayDepartmentName = displayDepartmentName
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
   // Get the table container and update the title
   const container = document.getElementById("summary-stats-container");
   const title = container.querySelector("h3") || document.createElement("h3");
-  title.textContent = "Visits by Drivetime";
+  title.innerHTML = `Visits by Drivetime<br><i>(${displayDepartmentName})</i>`;
   if (!title.parentElement) {
     container.prepend(title);
   }
@@ -1006,55 +1099,108 @@ async function updateSummaryStatsTable(departmentValue) {
     }
 
     if (departmentRow) {
-      // Create rows for the table in long format
+      // 1. Add header row first
+      const headerRow = document.createElement("tr");
 
-      // 1. Total Visits row
-      const totalRow = document.createElement("tr");
+      const minutesHeaderCell = document.createElement("td");
+      minutesHeaderCell.textContent = "Within:";
+      minutesHeaderCell.style.fontWeight = "normal";
+      headerRow.appendChild(minutesHeaderCell);
 
-      const totalLabelCell = document.createElement("td");
-      totalLabelCell.textContent = "Total:";
-      totalLabelCell.style.fontWeight = "bold";
-      totalRow.appendChild(totalLabelCell);
+      const visitsHeaderCell = document.createElement("td");
+      visitsHeaderCell.textContent = "Visits:";
+      visitsHeaderCell.style.fontWeight = "normal";
+      headerRow.appendChild(visitsHeaderCell);
 
-      const totalValueCell = document.createElement("td");
-      // Format with thousands separator
-      const totalVisits = departmentRow["total_visits"];
-      totalValueCell.textContent =
-        totalVisits != null
-          ? new Intl.NumberFormat().format(totalVisits)
-          : "N/A";
-      totalRow.appendChild(totalValueCell);
+      const percentHeaderCell = document.createElement("td");
+      percentHeaderCell.textContent = "Percentage:";
+      percentHeaderCell.style.fontWeight = "normal";
+      headerRow.appendChild(percentHeaderCell);
 
-      tableBody.appendChild(totalRow);
+      tableBody.appendChild(headerRow);
 
-      // 2. Drivetime percentage rows
+      // 2. Drivetime rows with both visits and percentages
       const drivetimeData = [
-        { label: "10 min:", column: "in_10_%" },
-        { label: "20 min:", column: "in_20_%" },
-        { label: "30 min:", column: "in_30_%" },
+        {
+          label: "10 min",
+          visitsColumn: "in_10_visits",
+          percentColumn: "in_10_%",
+        },
+        {
+          label: "20 min",
+          visitsColumn: "in_20_visits",
+          percentColumn: "in_20_%",
+        },
+        {
+          label: "30 min",
+          visitsColumn: "in_30_visits",
+          percentColumn: "in_30_%",
+        },
       ];
 
       drivetimeData.forEach((item) => {
         const row = document.createElement("tr");
 
+        // Label cell
         const labelCell = document.createElement("td");
         labelCell.textContent = item.label;
         row.appendChild(labelCell);
 
-        const valueCell = document.createElement("td");
-        // Format as percentage with 1 decimal place
-        const value = departmentRow[item.column];
-        valueCell.textContent =
-          value != null ? `${parseFloat(value).toFixed(1)}%` : "N/A";
-        row.appendChild(valueCell);
+        // Visits value cell
+        const visitsCell = document.createElement("td");
+        const visitsValue = departmentRow[item.visitsColumn];
+        visitsCell.textContent =
+          visitsValue != null
+            ? new Intl.NumberFormat().format(visitsValue)
+            : "N/A";
+        row.appendChild(visitsCell);
+
+        // Percentage value cell
+        const percentCell = document.createElement("td");
+        const percentValue = departmentRow[item.percentColumn];
+        percentCell.textContent =
+          percentValue != null
+            ? `${parseFloat(percentValue).toFixed(1)}%`
+            : "N/A";
+        row.appendChild(percentCell);
 
         tableBody.appendChild(row);
       });
+
+      // 3. Total row at the bottom
+      const totalRow = document.createElement("tr");
+      totalRow.className = "total-row"; // Add a class for easy identification/debugging
+
+      const totalLabelCell = document.createElement("td");
+      totalLabelCell.textContent = "Total";
+      totalLabelCell.style.fontWeight = "normal";
+      // italicize totalLabelCell
+      totalLabelCell.style.fontStyle = "italic";
+      totalRow.appendChild(totalLabelCell);
+
+      // Total visits cell
+      const totalVisitsCell = document.createElement("td");
+      const totalVisits = departmentRow["total_visits"];
+      totalVisitsCell.textContent =
+        totalVisits != null
+          ? new Intl.NumberFormat().format(totalVisits)
+          : "N/A";
+      totalVisitsCell.style.fontStyle = "italic";
+      totalRow.appendChild(totalVisitsCell);
+
+      // Total percentage cell (always 100%)
+      const totalPercentCell = document.createElement("td");
+      totalPercentCell.textContent = "100.0%";
+      totalPercentCell.style.fontStyle = "italic";
+      totalRow.appendChild(totalPercentCell);
+
+      // Debug log
+      tableBody.appendChild(totalRow);
     } else {
       // If no matching department is found
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 2; // Changed from 4 to 2 for the new format
+      td.colSpan = 3; // Changed from 2 to 3 for the new format with three columns
       td.textContent = `No data available for department: ${departmentValue}`;
       tr.appendChild(td);
       tableBody.appendChild(tr);
@@ -1065,19 +1211,10 @@ async function updateSummaryStatsTable(departmentValue) {
     // Show error message in the table
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 2; // Changed from 4 to 2 for the new format
+    td.colSpan = 3; // Changed from 2 to 3 for the new format with three columns
     td.textContent = `Error loading statistics: ${error.message}`;
     tr.appendChild(td);
     tableBody.appendChild(tr);
-  }
-
-  // Apply current theme to the table container
-  if (typeof currentTheme !== "undefined") {
-    if (currentTheme === "dark") {
-      container.classList.add("dark-mode");
-    } else {
-      container.classList.remove("dark-mode");
-    }
   }
 }
 
@@ -1100,7 +1237,18 @@ function loadDOTLayer(layerId, map) {
         data: data,
       });
 
-      // Add as a layer with appropriate styling
+      // Add a hover source and layer for highlighting
+      const hoverId = `${layerId}-hover`;
+
+      map.addSource(hoverId, {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      });
+
+      // Add the main layer
       if (map.getLayer(layerId)) {
         map.removeLayer(layerId);
       }
@@ -1119,36 +1267,99 @@ function loadDOTLayer(layerId, map) {
         },
       });
 
+      // Add the hover layer
+      map.addLayer({
+        id: hoverId,
+        type: "line",
+        source: hoverId,
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": layerId === "dot-uc" ? "#FF9090" : "#7EEEE5", // Lighter version of the original colors
+          "line-width": 10,
+          "line-opacity": 0.8,
+        },
+      });
+
+      // Move county labels to top if they exist
+      if (map.getLayer("ga-county-labels")) {
+        map.moveLayer("ga-county-labels");
+      }
+
       // Create a popup but don't add it to the map yet
       const popup = new mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false,
+        offset: 15, // Add a small offset to prevent cursor from overlapping with the popup
+        anchor: "bottom", // Keep popup above the cursor
       });
 
-      // Change cursor to pointer when hovering over a line
-      map.on("mouseenter", layerId, (e) => {
+      // Variable to track currently active feature
+      let hoveredFeatureId = null;
+      let popupTimeout = null;
+
+      // Improve hover experience
+      map.on("mousemove", layerId, (e) => {
         map.getCanvas().style.cursor = "pointer";
 
-        // Get the description from the feature
+        // Get the hovered feature
         const feature = e.features[0];
-        const description = feature.properties.Desc_short;
+        const featureId =
+          feature.id ||
+          feature.properties.id ||
+          JSON.stringify(feature.geometry.coordinates);
 
-        // Create popup content
-        const popupContent = `
-          <div>
-            <p>${description}</p>
-            <p><i>Click on project for more information</i></p>
-          </div>
-        `;
+        // Clear any existing timeout to avoid popup flashing
+        if (popupTimeout) {
+          clearTimeout(popupTimeout);
+          popupTimeout = null;
+        }
 
-        // Set popup coordinates and content
-        popup.setLngLat(e.lngLat).setHTML(popupContent).addTo(map);
+        // Only update if we're hovering over a new feature
+        if (hoveredFeatureId !== featureId) {
+          hoveredFeatureId = featureId;
+
+          // Update the hover source with just this feature
+          map.getSource(hoverId).setData({
+            type: "FeatureCollection",
+            features: [feature],
+          });
+
+          // Get the description from the feature
+          const description = feature.properties.Desc_short;
+
+          // Create popup content
+          const popupContent = `
+            <div>
+              <p>${description}</p>
+              <p><i>Click on project for more information</i></p>
+            </div>
+          `;
+
+          // Set popup position to current cursor position
+          popup.setLngLat(e.lngLat).setHTML(popupContent).addTo(map);
+        } else {
+          // Just update the popup's position without changing content
+          popup.setLngLat(e.lngLat);
+        }
       });
 
-      // Reset cursor and remove popup when mouse leaves the line
+      // Add a small delay before removing highlights when leaving the feature
       map.on("mouseleave", layerId, () => {
         map.getCanvas().style.cursor = "";
-        popup.remove();
+
+        // Clear hover state with a small delay to prevent flickering
+        // when moving between segments of the same line
+        popupTimeout = setTimeout(() => {
+          hoveredFeatureId = null;
+          map.getSource(hoverId).setData({
+            type: "FeatureCollection",
+            features: [],
+          });
+          popup.remove();
+        }, 100); // Small delay to make the experience smoother
       });
 
       // Handle click to open URL in a new tab
@@ -1172,7 +1383,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const drawer = document.querySelector("sl-drawer");
   const openBtn = document.querySelector(".openDrawerBtn");
   const closeBtn = drawer.querySelector(".close-button");
-  const radioGroup = document.querySelector("sl-radio-group");
+  const radioGroup = document.getElementById("theme-radio-container");
   const tooltip = document.getElementById("drawerTooltip");
   const compareMapToggle = document.getElementById("compareDemographics");
   const comparisonLayerSelect = document.getElementById("comparisonSelect");
@@ -1224,7 +1435,6 @@ document.addEventListener("DOMContentLoaded", () => {
       { selector: "#legend", class: "dark-mode" },
       { selector: "#comparison-legend", class: "dark-mode" },
       { selector: "header", class: "dark-mode" },
-      { selector: "#summary-stats-container", class: "dark-mode" },
       { selector: ".openDrawerBtn", class: "dark-mode" },
     ];
 
@@ -1315,7 +1525,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Conditionally show the comparison legend
       const comparisonLegend = document.getElementById("comparison-legend");
-      if (comparisonLayerSelect.value !== "aerial") {
+      if (
+        comparisonLayerSelect.value !== "aerial" &&
+        comparisonLayerSelect.value !== "streets"
+      ) {
         comparisonLegend.style.display = "block";
       } else {
         comparisonLegend.style.display = "none";
@@ -1419,7 +1632,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("comparison-legend").style.display = "none";
 
       // remove old marker
-      comparisonMarker.remove();
+      if (comparisonMarker) {
+        comparisonMarker.remove();
+      }
 
       // add red marker for aerial view
       comparisonMarker = new mapboxgl.Marker({
@@ -1441,12 +1656,74 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Handle the 'streets' layer to show Mapbox Streets layer
+    if (selectedLayer === "streets") {
+      // Store the current map center and zoom to restore after style change
+      const currentCenter = comparisonMap.getCenter();
+      const currentZoom = comparisonMap.getZoom();
+
+      comparisonMap.setStyle("mapbox://styles/mapbox/streets-v11");
+
+      // Wait for the style to finish loading before adding layers back
+      comparisonMap.once("style.load", () => {
+        // Restore previous view state
+        comparisonMap.setCenter(currentCenter);
+        comparisonMap.setZoom(currentZoom);
+
+        // County outlines
+        comparisonMap.addSource("ga-counties", {
+          type: "geojson",
+          data: "Data/GA_counties.geojson",
+        });
+        console.log("ga counties source added");
+
+        comparisonMap.addLayer({
+          id: "ga-county-outline",
+          type: "line",
+          source: "ga-counties",
+          paint: {
+            "line-color": "#000000",
+            "line-width": 1,
+          },
+        });
+
+        // County labels
+        comparisonMap.addSource("ga-county-labels", {
+          type: "geojson",
+          data: "Data/GA_counties_centroids.geojson",
+        });
+
+        comparisonMap.addLayer({
+          id: "ga-county-labels",
+          type: "symbol",
+          source: "ga-county-labels",
+          layout: {
+            "text-field": ["to-string", ["upcase", ["get", "NAME"]]],
+            "text-font": ["Open Sans Bold Italic", "Arial Unicode MS Regular"],
+            "text-size": 15,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#000000",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 2,
+          },
+          minzoom: 9,
+        });
+      });
+
+      // remove comparison legend
+      document.getElementById("comparison-legend").style.display = "none";
+    }
+
     // Handle the new polyline layers
     else if (selectedLayer === "dot-uc" || selectedLayer === "dot-pre") {
       // Add the DOT layer, depending on the selected layer
       loadDOTLayer(selectedLayer, comparisonMap);
       // remove comparison legend
       document.getElementById("comparison-legend").style.display = "none";
+
+      comparisonMap.moveLayer("ga-county-labels");
     }
 
     // Switching away from aerial — reset the style but keep the comparisonMap instance
