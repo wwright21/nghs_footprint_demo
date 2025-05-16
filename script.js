@@ -246,7 +246,7 @@ map.on("load", async () => {
     .setLngLat([-83.70610860246691, 34.10829863586579])
     .setPopup(
       new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
-        "<h3>NGPG West Jackson</h3>"
+        "<h3>NGPG - West Jackson</h3>"
       )
     )
     .addTo(map)
@@ -404,7 +404,7 @@ function initializeComparisonMap(comparisonLayer) {
             new mapboxgl.Popup({
               offset: 38,
               className: "custom-popup",
-            }).setHTML("<h3>NGPG Urgent Care</h3>")
+            }).setHTML("<h3>NGPG - Bethlehem</h3>")
           )
           .addTo(comparisonMap)
           .getElement().style.cursor = "pointer";
