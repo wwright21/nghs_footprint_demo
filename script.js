@@ -1646,7 +1646,7 @@ document.addEventListener("DOMContentLoaded", () => {
           new mapboxgl.Popup({
             offset: 38,
             className: "custom-popup",
-          }).setHTML("<h3>Jefferson Location</h3>")
+          }).setHTML("<h3>NGPG - Jefferson</h3>")
         )
         .addTo(comparisonMap);
 
