@@ -213,7 +213,7 @@ map.on("load", async () => {
     .setLngLat([-83.5933854224835, 34.10526598277187])
     .setPopup(
       new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
-        "<h3>Jefferson Location</h3>"
+        "<h3>NGPG - Jefferson</h3>"
       )
     )
     .addTo(map)
