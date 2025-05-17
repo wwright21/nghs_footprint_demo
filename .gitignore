@@ -3,3 +3,7 @@
 Scratch/
 
 .env
+
+.env.local
+
+env.js
