@@ -32,8 +32,34 @@ let comparisonMarker;
 let previousComparisonLayer = null;
 let currentBreaks = [];
 let currentColors = [];
+let hoveredHexId = null;
+let hoveredComparisonHexId = null;
+let animationFrameId = null;
+let targetHexFeature = null;
+let currentHexFeature = null;
+let targetComparisonHexFeature = null;
+let currentComparisonHexFeature = null;
 
-// -v-v-v-v-v-v-v-v MAPBOX MAP -v-v-v-v-v-v-v-v
+// Custom marker element creation function
+function createCustomMarker(scale = 1.0) {
+  const el = document.createElement('div');
+  el.className = 'custom-marker';
+  el.style.backgroundImage = 'url(Assets/nghs_logo.png)';
+  el.style.backgroundSize = '80% 80%';
+  el.style.backgroundPosition = 'center';
+  el.style.backgroundRepeat = 'no-repeat';
+  el.style.width = `${36 * scale}px`;
+  el.style.height = `${30 * scale}px`;
+  el.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+  el.style.borderRadius = '50%';
+  el.style.border = '2px solid #343a40';
+
+
+  el.style.cursor = 'pointer';
+  return el;
+}
+
+// -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
 map = new mapboxgl.Map({
   container: "before-map", // container ID
   style: {
@@ -139,24 +165,19 @@ map.on("load", async () => {
   }
   animateTooltip();
 
-  // Track hover over hex layer
-  map.on("mousemove", "visits-choropleth", (e) => {
-    const feature = e.features[0];
-    const visits = feature.properties.Visits;
-
-    tooltip.innerHTML = `<strong>Visits:</strong> ${visits.toLocaleString()}`;
-    tooltip.style.display = "block";
-  });
-
-  // Hide tooltip when not hovering
-  map.on("mouseleave", "visits-choropleth", () => {
-    tooltip.style.display = "none";
-  });
-
   // Add the map layers -v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
   map.addSource("hexes", {
     type: "geojson",
     data: originalHexGeojson,
+  });
+
+  // Add a source for the highlighted hex
+  map.addSource("hover-hex", {
+    type: "geojson",
+    data: {
+      type: "FeatureCollection",
+      features: []
+    }
   });
 
   // Add hex choropleth
@@ -201,6 +222,49 @@ map.on("load", async () => {
     filter: [">", ["get", "Visits"], 0],
   });
 
+  // Add hover highlight layer
+  map.addLayer({
+    id: "hex-hover-outline",
+    type: "line",
+    source: "hover-hex",
+    paint: {
+      "line-color": "#000000",
+      "line-width": 2,
+      "line-opacity": 0.9,
+      "line-opacity-transition": {
+        duration: 300,
+        delay: 0
+      },
+      "line-width-transition": {
+        duration: 300,
+        delay: 0
+      }
+    }
+  });
+
+  // Track hover over hex layer
+  map.on("mousemove", "visits-choropleth", (e) => {
+    const feature = e.features[0];
+    const hexId = feature.properties.hex_id;
+    const visits = feature.properties.Visits;
+
+    // Only update if we're hovering over a new hexagon
+    if (hexId !== hoveredHexId) {
+      hoveredHexId = hexId;
+      targetHexFeature = feature;
+    }
+
+    tooltip.innerHTML = `<strong>Visits:</strong> ${visits.toLocaleString()}`;
+    tooltip.style.display = "block";
+  });
+
+  // Hide tooltip and clear hover when not hovering
+  map.on("mouseleave", "visits-choropleth", () => {
+    tooltip.style.display = "none";
+    hoveredHexId = null;
+    targetHexFeature = null;
+  });
+
   // add common layers
   addCommonLayers(map, currentTheme);
 
@@ -208,49 +272,53 @@ map.on("load", async () => {
   map.moveLayer("ga-county-outline");
   map.moveLayer("ga-county-labels");
 
-  // Add marker for Jefferson Location
-  new mapboxgl.Marker({ color: "#343a40", scale: 1 })
+  // Add marker for Jefferson Location - larger marker
+  new mapboxgl.Marker({
+    element: createCustomMarker(1.5), // x% larger than the others
+  })
     .setLngLat([-83.5933854224835, 34.10526598277187])
     .setPopup(
       new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
         "<h3>NGPG - Jefferson</h3>"
       )
     )
-    .addTo(map)
-    .getElement().style.cursor = "pointer";
+    .addTo(map);
 
   // add NGMC - Barrow marker
-  new mapboxgl.Marker({ color: "#989300", scale: 1 })
+  new mapboxgl.Marker({
+    element: createCustomMarker(1.0),
+  })
     .setLngLat([-83.70763029985775, 34.008182535194734])
     .setPopup(
       new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
         "<h3>NGMC - Barrow</h3>"
       )
     )
-    .addTo(map)
-    .getElement().style.cursor = "pointer";
+    .addTo(map);
 
-  // add NGMC - Barrow marker
-  new mapboxgl.Marker({ color: "#989300", scale: 1 })
+  // add NGPG - Bethlehem marker
+  new mapboxgl.Marker({
+    element: createCustomMarker(1.0),
+  })
     .setLngLat([-83.75981523447074, 33.94135725379736])
     .setPopup(
       new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
-        "<h3>NGPG Urgent Care</h3>"
+        "<h3>NGPG - Bethlehem</h3>"
       )
     )
-    .addTo(map)
-    .getElement().style.cursor = "pointer";
+    .addTo(map);
 
-  // add NGMC - Barrow marker
-  new mapboxgl.Marker({ color: "#989300", scale: 1 })
+  // add NGPG - West Jackson marker
+  new mapboxgl.Marker({
+    element: createCustomMarker(1.0),
+  })
     .setLngLat([-83.70610860246691, 34.10829863586579])
     .setPopup(
       new mapboxgl.Popup({ offset: 38, className: "custom-popup" }).setHTML(
         "<h3>NGPG - West Jackson</h3>"
       )
     )
-    .addTo(map)
-    .getElement().style.cursor = "pointer";
+    .addTo(map);
 });
 
 // Initialize comparison map
@@ -308,6 +376,15 @@ function initializeComparisonMap(comparisonLayer) {
           data: comparisonOriginalGeojson,
         });
 
+        // Add a source for the highlighted hex in comparison map
+        comparisonMap.addSource("comparison-hover-hex", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: []
+          }
+        });
+
         if (!comparisonMap.getLayer("comparison-choropleth")) {
           comparisonMap.addLayer({
             id: "comparison-choropleth",
@@ -333,6 +410,26 @@ function initializeComparisonMap(comparisonLayer) {
             filter: [">", ["get", "value"], 0],
           });
         }
+
+        // Add hover highlight layer for comparison map
+        comparisonMap.addLayer({
+          id: "comparison-hex-hover-outline",
+          type: "line",
+          source: "comparison-hover-hex",
+          paint: {
+            "line-color": "#000000",
+            "line-width": 2,
+            "line-opacity": 0.9,
+            "line-opacity-transition": {
+              duration: 300,
+              delay: 0
+            },
+            "line-width-transition": {
+              duration: 300,
+              delay: 0
+            }
+          }
+        });
 
         // Set default metric
         const defaultMetric = comparisonLayer;
@@ -369,24 +466,23 @@ function initializeComparisonMap(comparisonLayer) {
         });
         comparisonMap.addControl(comparisonScale, "bottom-right");
 
-        // Add marker for Jefferson Location
+        // Add marker for Jefferson Location - larger marker
         comparisonMarker = new mapboxgl.Marker({
-          color: "#343a40",
-          scale: 1,
+          element: createCustomMarker(1.5), // 1.5x larger for consistency
         })
           .setLngLat([-83.5933854224835, 34.10526598277187])
           .setPopup(
             new mapboxgl.Popup({
               offset: 38,
               className: "custom-popup",
-            }).setHTML("<h3>Jefferson Location</h3>")
+            }).setHTML("<h3>NGPG - Jefferson</h3>")
           )
           .addTo(comparisonMap);
 
-        comparisonMarker.getElement().style.cursor = "pointer";
-
         // add NGMC - Barrow marker
-        new mapboxgl.Marker({ color: "#989300", scale: 1 })
+        new mapboxgl.Marker({
+          element: createCustomMarker(1.0),
+        })
           .setLngLat([-83.70763029985775, 34.008182535194734])
           .setPopup(
             new mapboxgl.Popup({
@@ -394,11 +490,12 @@ function initializeComparisonMap(comparisonLayer) {
               className: "custom-popup",
             }).setHTML("<h3>NGMC - Barrow</h3>")
           )
-          .addTo(comparisonMap)
-          .getElement().style.cursor = "pointer";
+          .addTo(comparisonMap);
 
-        // add NGMC - Barrow marker
-        new mapboxgl.Marker({ color: "#989300", scale: 1 })
+        // add NGPG - Bethlehem marker
+        new mapboxgl.Marker({
+          element: createCustomMarker(1.0),
+        })
           .setLngLat([-83.75981523447074, 33.94135725379736])
           .setPopup(
             new mapboxgl.Popup({
@@ -406,11 +503,12 @@ function initializeComparisonMap(comparisonLayer) {
               className: "custom-popup",
             }).setHTML("<h3>NGPG - Bethlehem</h3>")
           )
-          .addTo(comparisonMap)
-          .getElement().style.cursor = "pointer";
+          .addTo(comparisonMap);
 
-        // add NGMC - Barrow marker
-        new mapboxgl.Marker({ color: "#989300", scale: 1 })
+        // add NGPG - West Jackson marker
+        new mapboxgl.Marker({
+          element: createCustomMarker(1.0),
+        })
           .setLngLat([-83.70610860246691, 34.10829863586579])
           .setPopup(
             new mapboxgl.Popup({
@@ -418,8 +516,7 @@ function initializeComparisonMap(comparisonLayer) {
               className: "custom-popup",
             }).setHTML("<h3>NGPG West Jackson</h3>")
           )
-          .addTo(comparisonMap)
-          .getElement().style.cursor = "pointer";
+          .addTo(comparisonMap);
 
         resolve(comparisonMap);
       });
@@ -542,6 +639,7 @@ function addTooltipHandler(mapInstance, layerId, metricKey) {
   mapInstance.on("mousemove", layerId, (e) => {
     if (e.features.length > 0) {
       const feature = e.features[0];
+      const hexId = feature.properties.hex_id;
 
       // The key issue: you need to access the 'value' property, not the metricKey
       // In your geojson structure, the actual value is stored in properties.value
@@ -553,9 +651,8 @@ function addTooltipHandler(mapInstance, layerId, metricKey) {
       if (value !== null && value !== undefined && value !== 0) {
         // Apply currency format if needed
         if (currencyPrefixes[metricKey]) {
-          displayValue = `${
-            currencyPrefixes[metricKey]
-          }${value.toLocaleString()}`;
+          displayValue = `${currencyPrefixes[metricKey]
+            }${value.toLocaleString()}`;
         }
         // Apply percentage format if needed
         else if (metricKey.includes("percent")) {
@@ -571,13 +668,35 @@ function addTooltipHandler(mapInstance, layerId, metricKey) {
 
       tooltip.innerHTML = `<strong>${label}:</strong> ${displayValue}`;
       tooltip.style.display = "block";
-      tooltip.style.left = `${e.originalEvent.pageX + 10}px`;
-      tooltip.style.top = `${e.originalEvent.pageY + 10}px`;
+
+      // Update the hover highlight for the appropriate map
+      if (mapInstance === comparisonMap) {
+        // Only update if we're hovering over a new hexagon
+        if (hexId !== hoveredComparisonHexId) {
+          hoveredComparisonHexId = hexId;
+          targetComparisonHexFeature = feature;
+        }
+      } else {
+        // Main map hover handling
+        if (hexId !== hoveredHexId) {
+          hoveredHexId = hexId;
+          targetHexFeature = feature;
+        }
+      }
     }
   });
 
   mapInstance.on("mouseleave", layerId, () => {
     tooltip.style.display = "none";
+
+    // Clear the hover highlight for the appropriate map
+    if (mapInstance === comparisonMap) {
+      hoveredComparisonHexId = null;
+      targetComparisonHexFeature = null;
+    } else {
+      hoveredHexId = null;
+      targetHexFeature = null;
+    }
   });
 }
 
@@ -709,7 +828,7 @@ function updateLegend(breaks, colors, departmentValue) {
   document.getElementById("legend").style.display = "block";
 }
 
-// Comparison map choropleth section v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+// Comparison map choropleth section v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-
 async function loadComparisonLayer(selectedLayer) {
   // if the comparison layer isn't 'aerial' or 'streets', load it
   if (selectedLayer !== "aerial" && selectedLayer !== "streets") {
@@ -767,14 +886,30 @@ async function loadComparisonLayer(selectedLayer) {
 
       if (values.length > 1) {
         const breaks = ss.jenks(values, 6);
-        const colors = [
-          "#eff3ff",
-          "#c6dbef",
-          "#9ecae1",
-          "#6baed6",
-          "#3182bd",
-          "#08519c",
-        ];
+
+        // Choose color ramp based on the selected layer
+        let colors;
+        if (selectedLayer === "median_income") {
+          // Green color ramp for Median Income
+          colors = [
+            "#edf8e9",
+            "#c7e9c0",
+            "#a1d99b",
+            "#74c476",
+            "#31a354",
+            "#006d2c"
+          ];
+        } else {
+          // Default blue color ramp for other layers
+          colors = [
+            "#eff3ff",
+            "#c6dbef",
+            "#9ecae1",
+            "#6baed6",
+            "#3182bd",
+            "#08519c"
+          ];
+        }
 
         const colorExpression = ["interpolate", ["linear"], ["get", "value"]];
         for (let i = 1; i < breaks.length; i++) {
@@ -1220,6 +1355,23 @@ async function updateSummaryStatsTable(departmentValue) {
 
 // Function to load DOT layer data
 function loadDOTLayer(layerId, map) {
+  // First, check if any previous DOT layers exist and remove them
+  const dotLayers = ["dot-uc", "dot-pre"];
+  dotLayers.forEach(layer => {
+    if (map.getLayer(layer)) {
+      map.removeLayer(layer);
+    }
+    if (map.getLayer(`${layer}-hover`)) {
+      map.removeLayer(`${layer}-hover`);
+    }
+    if (map.getSource(layer)) {
+      map.removeSource(layer);
+    }
+    if (map.getSource(`${layer}-hover`)) {
+      map.removeSource(`${layer}-hover`);
+    }
+  });
+
   // Path to the GeoJSON file
   const dataPath = `Data/${layerId}.geojson`;
 
@@ -1390,6 +1542,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const checkbox10 = document.getElementById("drivetime-10");
   const checkbox20 = document.getElementById("drivetime-20");
   const checkbox30 = document.getElementById("drivetime-30");
+  const competitionCheckbox = document.getElementById("competition");
+  const possibleSitesCheckbox = document.getElementById("possible-sites");
   const initialDepartment = "All";
 
   // Hide the after-map initially
@@ -1410,44 +1564,42 @@ document.addEventListener("DOMContentLoaded", () => {
     drawer.hide();
   });
 
-  // Toggle the basemap from light to dark
-  radioGroup.addEventListener("sl-change", (event) => {
-    const selectedValue = event.target.value;
+  // Add event listeners for competition checkbox
+  competitionCheckbox.addEventListener("sl-change", (event) => {
+    const isChecked = event.target.checked;
 
-    // Update the current theme tracker
-    currentTheme = selectedValue;
-
-    // Update the tile source for main map
-    map.getSource("carto").setTiles([themeStyles[selectedValue].tileUrl]);
-
-    // Update tile source for after-map, if it exists
-    if (comparisonMap && comparisonMap.getSource("carto")) {
-      comparisonMap
-        .getSource("carto")
-        .setTiles([themeStyles[selectedValue].tileUrl]);
+    // Handle main map
+    competitionMarkers = removeMarkers(competitionMarkers);
+    if (isChecked) {
+      competitionMarkers = addCompetitionMarkers(map);
     }
 
-    // Update polygon outline colors based on the basemap
-    updateLayerColors(selectedValue);
-
-    // Update UI elements based on theme
-    const elementsToUpdate = [
-      { selector: "#legend", class: "dark-mode" },
-      { selector: "#comparison-legend", class: "dark-mode" },
-      { selector: "header", class: "dark-mode" },
-      { selector: ".openDrawerBtn", class: "dark-mode" },
-    ];
-
-    elementsToUpdate.forEach((item) => {
-      const element = document.querySelector(item.selector);
-      if (element) {
-        if (selectedValue === "dark") {
-          element.classList.add(item.class);
-        } else {
-          element.classList.remove(item.class);
-        }
+    // Handle comparison map if it exists
+    if (comparisonMap) {
+      comparisonCompetitionMarkers = removeMarkers(comparisonCompetitionMarkers);
+      if (isChecked) {
+        comparisonCompetitionMarkers = addCompetitionMarkers(comparisonMap);
       }
-    });
+    }
+  });
+
+  // Add event listeners for possible sites checkbox
+  possibleSitesCheckbox.addEventListener("sl-change", (event) => {
+    const isChecked = event.target.checked;
+
+    // Handle main map
+    possibleSiteMarkers = removeMarkers(possibleSiteMarkers);
+    if (isChecked) {
+      possibleSiteMarkers = addPossibleSiteMarkers(map);
+    }
+
+    // Handle comparison map if it exists
+    if (comparisonMap) {
+      comparisonPossibleSiteMarkers = removeMarkers(comparisonPossibleSiteMarkers);
+      if (isChecked) {
+        comparisonPossibleSiteMarkers = addPossibleSiteMarkers(comparisonMap);
+      }
+    }
   });
 
   // Add event listeners for drivetime checkboxes
@@ -1549,6 +1701,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 mousemove: false,
               }
             );
+
+            // Add markers to comparison map if checkboxes are checked
+            if (competitionCheckbox.checked) {
+              comparisonCompetitionMarkers = addCompetitionMarkers(comparisonMap);
+            }
+
+            if (possibleSitesCheckbox.checked) {
+              comparisonPossibleSiteMarkers = addPossibleSiteMarkers(comparisonMap);
+            }
           })
           .catch((error) => {
             console.error("Error initializing comparison map:", error);
@@ -1563,6 +1724,15 @@ document.addEventListener("DOMContentLoaded", () => {
             mousemove: false,
           }
         );
+
+        // Add markers to comparison map if checkboxes are checked
+        if (competitionCheckbox.checked) {
+          comparisonCompetitionMarkers = addCompetitionMarkers(comparisonMap);
+        }
+
+        if (possibleSitesCheckbox.checked) {
+          comparisonPossibleSiteMarkers = addPossibleSiteMarkers(comparisonMap);
+        }
       }
     } else {
       // Disable the select element
@@ -1578,6 +1748,10 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("after-map").style.display = "none";
       const comparisonLegend = document.getElementById("comparison-legend");
       comparisonLegend.style.display = "none";
+
+      // Remove markers from comparison map
+      comparisonCompetitionMarkers = removeMarkers(comparisonCompetitionMarkers);
+      comparisonPossibleSiteMarkers = removeMarkers(comparisonPossibleSiteMarkers);
     }
   });
 
@@ -1587,6 +1761,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle the 'aerial' layer
     if (selectedLayer === "aerial") {
+      // Remove any existing choropleth layer
+      if (comparisonMap.getLayer("comparison-choropleth")) {
+        comparisonMap.removeLayer("comparison-choropleth");
+      }
+
+      // Remove any existing choropleth hex outline layer
+      if (comparisonMap.getLayer("comparison-hex-outline")) {
+        comparisonMap.removeLayer("comparison-hex-outline");
+      }
+
+      // Remove sources after removing the layers that depend on them
+      if (comparisonMap.getSource("comparison-hexes")) {
+        comparisonMap.removeSource("comparison-hexes");
+      }
+
       // Remove Carto basemap style and set Google Aerial tiles
       comparisonMap.setStyle({
         version: 8,
@@ -1638,8 +1827,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // add red marker for aerial view
       comparisonMarker = new mapboxgl.Marker({
-        color: "#ff4d4d", // New color
-        scale: 1,
+        element: createCustomMarker(1.5), // Larger marker with custom logo
       })
         .setLngLat([-83.5933854224835, 34.10526598277187])
         .setPopup(
@@ -1653,11 +1841,36 @@ document.addEventListener("DOMContentLoaded", () => {
       // Set cursor style
       comparisonMarker.getElement().style.cursor = "pointer";
 
+      // Clear any existing hover state for comparison map
+      hoveredComparisonHexId = null;
+      targetComparisonHexFeature = null;
+      if (comparisonMap.getSource("comparison-hover-hex")) {
+        comparisonMap.getSource("comparison-hover-hex").setData({
+          type: "FeatureCollection",
+          features: []
+        });
+      }
+
       return;
     }
 
     // Handle the 'streets' layer to show Mapbox Streets layer
     if (selectedLayer === "streets") {
+      // Remove any existing choropleth layer
+      if (comparisonMap.getLayer("comparison-choropleth")) {
+        comparisonMap.removeLayer("comparison-choropleth");
+      }
+
+      // Remove any existing choropleth hex outline layer
+      if (comparisonMap.getLayer("comparison-hex-outline")) {
+        comparisonMap.removeLayer("comparison-hex-outline");
+      }
+
+      // Remove sources after removing the layers that depend on them
+      if (comparisonMap.getSource("comparison-hexes")) {
+        comparisonMap.removeSource("comparison-hexes");
+      }
+
       // Store the current map center and zoom to restore after style change
       const currentCenter = comparisonMap.getCenter();
       const currentZoom = comparisonMap.getZoom();
@@ -1714,16 +1927,174 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // remove comparison legend
       document.getElementById("comparison-legend").style.display = "none";
+
+      // Clear any existing hover state for comparison map
+      hoveredComparisonHexId = null;
+      targetComparisonHexFeature = null;
+      if (comparisonMap.getSource("comparison-hover-hex")) {
+        comparisonMap.getSource("comparison-hover-hex").setData({
+          type: "FeatureCollection",
+          features: []
+        });
+      }
+
+      return;
+
     }
 
     // Handle the new polyline layers
     else if (selectedLayer === "dot-uc" || selectedLayer === "dot-pre") {
+      // First remove existing markers
+      if (comparisonMarker) {
+        comparisonMarker.remove();
+      }
+
+      // Remove any existing choropleth layer
+      if (comparisonMap.getLayer("comparison-choropleth")) {
+        comparisonMap.removeLayer("comparison-choropleth");
+      }
+
+      // Remove any existing choropleth hex outline layer
+      if (comparisonMap.getLayer("comparison-hex-outline")) {
+        comparisonMap.removeLayer("comparison-hex-outline");
+      }
+
+      // Remove sources after removing the layers that depend on them
+      if (comparisonMap.getSource("comparison-hexes")) {
+        comparisonMap.removeSource("comparison-hexes");
+      }
+
       // Add the DOT layer, depending on the selected layer
       loadDOTLayer(selectedLayer, comparisonMap);
+
+      // Re-add the Jefferson marker with custom logo
+      comparisonMarker = new mapboxgl.Marker({
+        element: createCustomMarker(1.5), // 1.5x larger for consistency
+      })
+        .setLngLat([-83.5933854224835, 34.10526598277187])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>NGPG - Jefferson</h3>")
+        )
+        .addTo(comparisonMap);
+
+      // Re-add other markers
+      new mapboxgl.Marker({
+        element: createCustomMarker(1.0),
+      })
+        .setLngLat([-83.70763029985775, 34.008182535194734])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>NGMC - Barrow</h3>")
+        )
+        .addTo(comparisonMap);
+
+      new mapboxgl.Marker({
+        element: createCustomMarker(1.0),
+      })
+        .setLngLat([-83.75981523447074, 33.94135725379736])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>NGPG - Bethlehem</h3>")
+        )
+        .addTo(comparisonMap);
+
+      new mapboxgl.Marker({
+        element: createCustomMarker(1.0),
+      })
+        .setLngLat([-83.70610860246691, 34.10829863586579])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>NGPG - West Jackson</h3>")
+        )
+        .addTo(comparisonMap);
+
       // remove comparison legend
       document.getElementById("comparison-legend").style.display = "none";
 
-      comparisonMap.moveLayer("ga-county-labels");
+      // Clear any existing hover state for comparison map
+      hoveredComparisonHexId = null;
+      targetComparisonHexFeature = null;
+      if (comparisonMap.getSource("comparison-hover-hex")) {
+        comparisonMap.getSource("comparison-hover-hex").setData({
+          type: "FeatureCollection",
+          features: []
+        });
+      }
+
+      // ensure basemap style is set to dark / light Carto DB 
+      comparisonMap.setStyle({
+        version: 8,
+        sources: {
+          carto: {
+            type: "raster",
+            tiles: [themeStyles[currentTheme].tileUrl],
+            tileSize: 256,
+            attribution:
+              '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.loopnet.com/commercial-real-estate-brokers/profile/george-hokayem/w7x34gkb">SVN Hokayem Co.</a>',
+          },
+        },
+        glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+        layers: [
+          {
+            id: "carto-layer",
+            type: "raster",
+            source: "carto",
+            minzoom: 0,
+            maxzoom: 20,
+          },
+        ],
+      });
+
+      // add county outlines
+      comparisonMap.addSource("ga-counties", {
+        type: "geojson",
+        data: "Data/GA_counties.geojson",
+      });
+
+      comparisonMap.addLayer({
+        id: "ga-county-outline",
+        type: "line",
+        source: "ga-counties",
+        paint: {
+          "line-color": "#000000",
+          "line-width": 1,
+        },
+      });
+
+      // add county labels
+      comparisonMap.addSource("ga-county-labels", {
+        type: "geojson",
+        data: "Data/GA_counties_centroids.geojson",
+      });
+
+      comparisonMap.addLayer({
+        id: "ga-county-labels",
+        type: "symbol",
+        source: "ga-county-labels",
+        layout: {
+          "text-field": ["to-string", ["upcase", ["get", "NAME"]]],
+          "text-font": ["Open Sans Bold Italic", "Arial Unicode MS Regular"],
+          "text-size": 15,
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": "#000000",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 2,
+        },
+        minzoom: 9,
+      });
+
+      return; // Important: return here to prevent the style reset below
     }
 
     // Switching away from aerial — reset the style but keep the comparisonMap instance
@@ -1756,19 +2127,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (comparisonMarker) comparisonMarker.remove();
 
       comparisonMarker = new mapboxgl.Marker({
-        color: "#343a40",
-        scale: 1,
+        element: createCustomMarker(1.5), // Always use custom logo with 1.5x scale
       })
         .setLngLat([-83.5933854224835, 34.10526598277187])
         .setPopup(
           new mapboxgl.Popup({
             offset: 38,
             className: "custom-popup",
-          }).setHTML("<h3>Jefferson Location</h3>")
+          }).setHTML("<h3>NGPG - Jefferson</h3>")
         )
         .addTo(comparisonMap);
-
-      comparisonMarker.getElement().style.cursor = "pointer";
 
       // Re-add any common layers like boundaries, outlines, etc.
       addCommonLayers(comparisonMap, currentTheme);
@@ -1776,7 +2144,34 @@ document.addEventListener("DOMContentLoaded", () => {
       // Re-add the data layer
       await loadComparisonLayer(selectedLayer);
 
-      // show in the console the layers in the comparisonMap
+      // Re-add the hover source and layer for comparison map
+      comparisonMap.addSource("comparison-hover-hex", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: []
+        }
+      });
+
+      comparisonMap.addLayer({
+        id: "comparison-hex-hover-outline",
+        type: "line",
+        source: "comparison-hover-hex",
+        paint: {
+          "line-color": "#000000",
+          "line-width": 2,
+          "line-opacity": 0.9,
+          "line-opacity-transition": {
+            duration: 300,
+            delay: 0
+          },
+          "line-width-transition": {
+            duration: 300,
+            delay: 0
+          }
+        }
+      });
+
       comparisonMap.moveLayer("ga-county-outline");
       comparisonMap.moveLayer("ga-county-labels");
 
@@ -1785,6 +2180,241 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update legend
       updateComparisonLegend(breaks, colors, selectedLayer);
+
+      // Re-add other main facility markers
+      new mapboxgl.Marker({
+        element: createCustomMarker(1.0),
+      })
+        .setLngLat([-83.70763029985775, 34.008182535194734])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>NGMC - Barrow</h3>")
+        )
+        .addTo(comparisonMap);
+
+      new mapboxgl.Marker({
+        element: createCustomMarker(1.0),
+      })
+        .setLngLat([-83.75981523447074, 33.94135725379736])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>NGPG - Bethlehem</h3>")
+        )
+        .addTo(comparisonMap);
+
+      new mapboxgl.Marker({
+        element: createCustomMarker(1.0),
+      })
+        .setLngLat([-83.70610860246691, 34.10829863586579])
+        .setPopup(
+          new mapboxgl.Popup({
+            offset: 38,
+            className: "custom-popup",
+          }).setHTML("<h3>NGPG - West Jackson</h3>")
+        )
+        .addTo(comparisonMap);
+
+      // Re-add competition and possible site markers if checkboxes are checked
+      if (document.getElementById("competition").checked) {
+        comparisonCompetitionMarkers = addCompetitionMarkers(comparisonMap);
+      }
+
+      if (document.getElementById("possible-sites").checked) {
+        comparisonPossibleSiteMarkers = addPossibleSiteMarkers(comparisonMap);
+      }
     });
   });
 });
+
+// Function to animate hexagon hover effects
+function animateHexHighlight() {
+  // Main map animation
+  if (targetHexFeature !== currentHexFeature) {
+    // If we have a new target or need to clear the current highlight
+    if (!targetHexFeature) {
+      // Fade out current feature if target is null
+      currentHexFeature = null;
+
+      // Set opacity to 0 first (will transition smoothly due to transition settings)
+      if (map.getLayer("hex-hover-outline")) {
+        map.setPaintProperty("hex-hover-outline", "line-opacity", 0);
+      }
+
+      // After the transition completes, clear the data
+      setTimeout(() => {
+        if (map.getSource("hover-hex")) {
+          map.getSource("hover-hex").setData({
+            type: "FeatureCollection",
+            features: []
+          });
+        }
+      }, 300); // Match the transition duration
+    } else {
+      // Transition to new feature
+      currentHexFeature = targetHexFeature;
+
+      // First update the data
+      if (map.getSource("hover-hex")) {
+        map.getSource("hover-hex").setData({
+          type: "FeatureCollection",
+          features: [currentHexFeature]
+        });
+      }
+
+      // Then ensure opacity is set to full (will transition smoothly)
+      if (map.getLayer("hex-hover-outline")) {
+        map.setPaintProperty("hex-hover-outline", "line-opacity", 0.9);
+      }
+    }
+  }
+
+  // Comparison map animation
+  if (comparisonMap && targetComparisonHexFeature !== currentComparisonHexFeature) {
+    // If we have a new target or need to clear the current highlight
+    if (!targetComparisonHexFeature) {
+      // Fade out current feature if target is null
+      currentComparisonHexFeature = null;
+
+      // Set opacity to 0 first (will transition smoothly)
+      if (comparisonMap.getLayer("comparison-hex-hover-outline")) {
+        comparisonMap.setPaintProperty("comparison-hex-hover-outline", "line-opacity", 0);
+      }
+
+      // After the transition completes, clear the data
+      setTimeout(() => {
+        if (comparisonMap.getSource("comparison-hover-hex")) {
+          comparisonMap.getSource("comparison-hover-hex").setData({
+            type: "FeatureCollection",
+            features: []
+          });
+        }
+      }, 300); // Match the transition duration
+    } else {
+      // Transition to new feature
+      currentComparisonHexFeature = targetComparisonHexFeature;
+
+      // First update the data
+      if (comparisonMap.getSource("comparison-hover-hex")) {
+        comparisonMap.getSource("comparison-hover-hex").setData({
+          type: "FeatureCollection",
+          features: [currentComparisonHexFeature]
+        });
+      }
+
+      // Then ensure opacity is set to full (will transition smoothly)
+      if (comparisonMap.getLayer("comparison-hex-hover-outline")) {
+        comparisonMap.setPaintProperty("comparison-hex-hover-outline", "line-opacity", 0.9);
+      }
+    }
+  }
+
+  // Continue animation loop
+  animationFrameId = requestAnimationFrame(animateHexHighlight);
+}
+
+// Start the animation loop
+animationFrameId = requestAnimationFrame(animateHexHighlight);
+
+// Define coordinates for Competition and Possible Sites
+const competitionSites = [
+  { lng: -83.59675251660772, lat: 34.108028099536256, name: "Piedmont - Urgent Care" },
+  { lng: -83.41482817571007, lat: 33.96997723688558, name: "Piedmont - Hawthorne" },
+  { lng: -83.46563699401626, lat: 33.91609717921617, name: "Piedmont - Oconee Health" },
+];
+
+const possibleSites = [
+  { lng: -83.5936388995722, lat: 34.10288350800476, name: "Site 1" },
+  { lng: -83.43727920680004, lat: 33.992078081742264, name: "Site 2" },
+];
+
+// Arrays to store marker references
+let competitionMarkers = [];
+let possibleSiteMarkers = [];
+let comparisonCompetitionMarkers = [];
+let comparisonPossibleSiteMarkers = [];
+
+// Function to create a custom pin marker element
+function createPinMarker(color) {
+  const el = document.createElement('div');
+  el.className = 'custom-pin-marker';
+  el.style.width = '20px';
+  el.style.height = '20px';
+  el.style.borderRadius = '50% 50% 50% 0';
+  el.style.backgroundColor = color;
+  el.style.transform = 'rotate(-45deg)';
+  el.style.margin = '-20px 0 0 -20px';
+  el.style.borderColor = '#fff';
+  el.style.borderStyle = 'solid';
+  el.style.borderWidth = '2px';
+  el.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
+  el.style.cursor = 'pointer'; // Add pointer cursor
+
+  // Add an inner circle
+  const inner = document.createElement('div');
+  inner.style.width = '10px';
+  inner.style.height = '10px';
+  inner.style.margin = '3px 0 0 3px';
+  inner.style.borderRadius = '50%';
+  inner.style.backgroundColor = '#fff';
+
+  el.appendChild(inner);
+  return el;
+}
+
+// Function to add competition markers
+function addCompetitionMarkers(mapInstance) {
+  const markers = [];
+
+  competitionSites.forEach(site => {
+    const marker = new mapboxgl.Marker({
+      element: createPinMarker('#d62828') // Red pin
+    })
+      .setLngLat([site.lng, site.lat])
+      .setPopup(
+        new mapboxgl.Popup({
+          offset: 25,
+          className: "custom-popup"
+        }).setHTML(`<h3>${site.name}</h3>`)
+      );
+
+    marker.addTo(mapInstance);
+    markers.push(marker);
+  });
+
+  return markers;
+}
+
+// Function to add possible site markers
+function addPossibleSiteMarkers(mapInstance) {
+  const markers = [];
+
+  possibleSites.forEach(site => {
+    const marker = new mapboxgl.Marker({
+      element: createPinMarker('#3a86ff') // Blue pin
+    })
+      .setLngLat([site.lng, site.lat])
+      .setPopup(
+        new mapboxgl.Popup({
+          offset: 25,
+          className: "custom-popup"
+        }).setHTML(`<h3>${site.name}</h3>`)
+      );
+
+    marker.addTo(mapInstance);
+    markers.push(marker);
+  });
+
+  return markers;
+}
+
+// Function to remove markers
+function removeMarkers(markers) {
+  if (markers && markers.length) {
+    markers.forEach(marker => marker.remove());
+  }
+  return [];
+}

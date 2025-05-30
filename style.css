@@ -1,30 +1,31 @@
-html, body {
+html,
+body {
   height: 100%;
-  margin: 0; 
+  margin: 0;
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Roboto', sans-serif;
-    overflow: hidden;
-  }
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  overflow: hidden;
+}
 
 /* Regular (i.e. light mode) header */
 header {
-    background-color: #343a40; 
-    color: #fff;
-    text-align: left;
-    padding: 10px;
-    font-size: 28px;
-    font-weight: bold;
-    position: fixed;
-    width: 100%;
-    top: 0;
-    left: 0;
-    z-index: 2;
-    opacity: 0.95;
-    border-bottom: 1px solid #efefef;
+  background-color: #343a40;
+  color: #fff;
+  text-align: left;
+  padding: 10px;
+  font-size: 28px;
+  font-weight: bold;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  opacity: 0.95;
+  border-bottom: 1px solid #efefef;
 }
 
 /* Dark mode header */
@@ -36,11 +37,14 @@ header.dark-mode {
 
 .nghs-logo {
   position: absolute;
-  right: 30px;  
+  right: 30px;
   bottom: 45px;
-  transform: translateY(-50%);  /* Ensures perfect vertical centering */
-  height: 45px;  /* Adjust as needed */
-  width: auto;  /* Maintains aspect ratio */
+  transform: translateY(-50%);
+  /* Ensures perfect vertical centering */
+  height: 45px;
+  /* Adjust as needed */
+  width: auto;
+  /* Maintains aspect ratio */
   z-index: 2;
 }
 
@@ -55,34 +59,38 @@ sl-button.openDrawerBtn {
 
 /* Light mode styling (default) */
 sl-button.openDrawerBtn::part(base) {
-  background-color: #343a40; /* Dark background in light mode */
+  background-color: #343a40;
+  /* Dark background in light mode */
   color: white;
   font-size: 20px;
   border-radius: 10px;
   border: 1px solid #efefef;
   width: 148px;
-  transition: var(--sl-transition-medium) background-color ease, 
-              var(--sl-transition-medium) border ease,
-              var(--sl-transition-medium) color ease;
+  transition: var(--sl-transition-medium) background-color ease,
+    var(--sl-transition-medium) border ease,
+    var(--sl-transition-medium) color ease;
 }
 
 /* Light mode hover effect */
 sl-button.openDrawerBtn::part(base):hover {
-  background-color: #efefef; /* Light background on hover in light mode */
+  background-color: #efefef;
+  /* Light background on hover in light mode */
   color: #343a40;
   border: 1px solid #343a40;
 }
 
 /* Dark mode styling */
 sl-button.openDrawerBtn.dark-mode::part(base) {
-  background-color: #efefef; /* Light background in dark mode */
+  background-color: #efefef;
+  /* Light background in dark mode */
   color: #343a40;
   border: 1px solid #343a40;
 }
 
 /* Dark mode hover effect */
 sl-button.openDrawerBtn.dark-mode::part(base):hover {
-  background-color: #343a40; /* Dark background on hover in dark mode */
+  background-color: #343a40;
+  /* Dark background on hover in dark mode */
   color: white;
   border: 1px solid #efefef;
 }
@@ -90,12 +98,12 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 #geocoder-container {
   position: absolute;
   top: 0.5px;
-  right: 0px!important;
-  z-index: 99!important;
+  right: 0px !important;
+  z-index: 99 !important;
 }
 
 #geocoder-container:hover {
-  opacity: 1!important;
+  opacity: 1 !important;
 }
 
 #geocoder-container .mapboxgl-ctrl-geocoder input {
@@ -105,18 +113,18 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 
 /* place the geocoder at the top left of the screen */
 .mapboxgl-ctrl-geocoder {
-  width: 80px!important;
+  width: 80px !important;
   transition: width 0.3s ease !important;
-  margin-top: 6px!important;
-  margin-right: 20px!important;
+  margin-top: 6px !important;
+  margin-right: 20px !important;
   opacity: var(--opacity-value);
-  z-index: 10!important;
+  z-index: 10 !important;
   border: 2px solid #343a40;
 }
 
 /* Expanded state on focus */
 .mapboxgl-ctrl-geocoder:focus-within {
-  width: 300px!important;
+  width: 300px !important;
 }
 
 .mapboxgl-popup-content {
@@ -175,25 +183,28 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 :root {
   --opacity-value: 0.90;
   --topline-margin: 25px;
-} 
+}
 
-#feature-filter + span {
+#feature-filter+span {
   position: absolute;
   right: 20px;
-  color:darkgrey;
+  color: darkgrey;
   top: 15px;
 }
 
 /* Google Material UI icons */
 .material-symbols-outlined {
   font-variation-settings:
-  'FILL' 0,
-  'wght' 400,
-  'GRAD' 0,
-  'opsz' 24;
-  vertical-align: middle; /* Align icon with text */
-  margin-left: 4px; /* Optional: Add space between text and icon */
-  line-height: 1; /* Ensures consistent alignment */
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  vertical-align: middle;
+  /* Align icon with text */
+  margin-left: 4px;
+  /* Optional: Add space between text and icon */
+  line-height: 1;
+  /* Ensures consistent alignment */
 }
 
 /* Center the radio group */
@@ -204,7 +215,8 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   left: 50%;
   transform: translateX(-50%);
   z-index: 99;
-  opacity: var(--opacity-value); /* Ensure --opacity-value is defined */
+  opacity: var(--opacity-value);
+  /* Ensure --opacity-value is defined */
 }
 
 #theme-radio-container sl-radio-group {
@@ -246,6 +258,25 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 }
 
 .drivetime-checkboxes {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+}
+
+.additional-layers-container {
+  margin-top: 20px;
+  align-items: center;
+  text-align: center;
+}
+
+.additional-layers-header {
+  font-size: 17px;
+  font-weight: 400;
+  text-align: center;
+  margin: 0 0 15px 0;
+}
+
+.additional-layers-checkboxes {
   display: flex;
   justify-content: center;
   gap: 9px;
@@ -294,14 +325,19 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   width: 20px;
   height: 20px;
   margin-right: 5px;
-  clip-path: polygon(
-    50% 0%,     /* top center */
-    93% 25%,    /* top right */
-    93% 75%,    /* bottom right */
-    50% 100%,   /* bottom center */
-    7% 75%,     /* bottom left */
-    7% 25%      /* top left */
-  );
+  clip-path: polygon(50% 0%,
+      /* top center */
+      93% 25%,
+      /* top right */
+      93% 75%,
+      /* bottom right */
+      50% 100%,
+      /* bottom center */
+      7% 75%,
+      /* bottom left */
+      7% 25%
+      /* top left */
+    );
 }
 
 .legend-item {
@@ -314,11 +350,11 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 .legend.dark-mode {
   background-color: #efefef;
   color: #343a40;
-  border: 1px solid #efefef;
+  border: 1px solid #343a40;
 }
 
 #comparison-legend {
-  display: none; 
+  display: none;
   background-color: #343a40;
   opacity: var(--opacity-value);
   border-radius: 10px;
@@ -327,7 +363,8 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   padding: 10px;
   position: absolute;
   top: 70px;
-  right: 20px; /* dynamically anchor to the right edge */
+  right: 20px;
+  /* dynamically anchor to the right edge */
   z-index: 2;
   text-align: center;
   width: auto;
@@ -394,7 +431,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   border-collapse: collapse;
 }
 
-#summary-stats-table th, 
+#summary-stats-table th,
 #summary-stats-table td {
   padding: 5px;
   text-align: center;
@@ -424,6 +461,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   .nghs-logo,
   .svn-logo,
   #downloadBtn {
-      display: none !important;  /* Hides elements on smaller screens */
+    display: none !important;
+    /* Hides elements on smaller screens */
   }
 }
