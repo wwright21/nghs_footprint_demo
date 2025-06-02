@@ -465,3 +465,8 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
     /* Hides elements on smaller screens */
   }
 }
+
+/* Disable scrollbar in sl-drawer */
+sl-drawer::part(body) {
+  overflow-y: hidden;
+}
