@@ -1534,9 +1534,12 @@ function loadDOTLayer(layerId, map) {
 document.addEventListener("DOMContentLoaded", () => {
   const drawer = document.querySelector("sl-drawer");
   const openBtn = document.querySelector(".openDrawerBtn");
+  const openPermitTrackerBtn = document.querySelector(".permitTrackerBtn");
   const closeBtn = drawer.querySelector(".close-button");
   const radioGroup = document.getElementById("theme-radio-container");
   const tooltip = document.getElementById("drawerTooltip");
+  const permitTrackerTooltip = document.getElementById("permitTrackerTooltip");
+  const closePermitTrackerBtn = document.querySelector(".close-permit-button");
   const compareMapToggle = document.getElementById("compareDemographics");
   const comparisonLayerSelect = document.getElementById("comparisonSelect");
   const checkbox10 = document.getElementById("drivetime-10");
@@ -1641,9 +1644,19 @@ document.addEventListener("DOMContentLoaded", () => {
     tooltip.show();
   });
 
+  // show permit tracker tooltip only when hovering
+  openPermitTrackerBtn.addEventListener("mouseenter", () => {
+    permitTrackerTooltip.show();
+  });
+
   // Hide drawer tooltip when not hovering
   openBtn.addEventListener("mouseleave", () => {
     tooltip.hide();
+  });
+
+  // hide permit tracker tooltip when not hovering
+  openPermitTrackerBtn.addEventListener("mouseleave", () => {
+    permitTrackerTooltip.hide();
   });
 
   // Hide drawer tooltip if the drawer is closed (in case it re-triggers)
@@ -2346,7 +2359,7 @@ function createPinMarker(color) {
   el.style.borderRadius = '50% 50% 50% 0';
   el.style.backgroundColor = color;
   el.style.transform = 'rotate(-45deg)';
-  el.style.margin = '-20px 0 0 -20px';
+  el.style.margin = '0'; // Remove the negative margins
   el.style.borderColor = '#fff';
   el.style.borderStyle = 'solid';
   el.style.borderWidth = '2px';
@@ -2371,7 +2384,9 @@ function addCompetitionMarkers(mapInstance) {
 
   competitionSites.forEach(site => {
     const marker = new mapboxgl.Marker({
-      element: createPinMarker('#d62828') // Red pin
+      element: createPinMarker('#d62828'), // Red pin
+      anchor: 'bottom', // Set anchor to bottom of the pin
+      offset: [0, 10] // Offset to position the pin's point at the exact coordinates
     })
       .setLngLat([site.lng, site.lat])
       .setPopup(
@@ -2394,7 +2409,9 @@ function addPossibleSiteMarkers(mapInstance) {
 
   possibleSites.forEach(site => {
     const marker = new mapboxgl.Marker({
-      element: createPinMarker('#3a86ff') // Blue pin
+      element: createPinMarker('#3a86ff'), // Blue pin
+      anchor: 'bottom', // Set anchor to bottom of the pin
+      offset: [0, 10] // Offset to position the pin's point at the exact coordinates
     })
       .setLngLat([site.lng, site.lat])
       .setPopup(
@@ -2418,3 +2435,21 @@ function removeMarkers(markers) {
   }
   return [];
 }
+
+// Get references to the main drawer elements
+const drawer = document.querySelector('sl-drawer');
+const openButton = document.querySelector('.openDrawer');
+const closeButton = drawer.querySelector('.close-button');
+
+// Get references to the permit tracker drawer elements
+const permitTrackerDrawer = document.querySelector('.permit-tracker-drawer');
+const permitTrackerButton = document.querySelector('.permitTrackerBtn');
+const closePermitButton = permitTrackerDrawer.querySelector('.close-permit-button');
+
+// Event listeners for the main drawer
+openButton.addEventListener('click', () => drawer.show());
+closeButton.addEventListener('click', () => drawer.hide());
+
+// Event listeners for the permit tracker drawer
+permitTrackerButton.addEventListener('click', () => permitTrackerDrawer.show());
+closePermitButton.addEventListener('click', () => permitTrackerDrawer.hide());

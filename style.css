@@ -57,12 +57,16 @@ sl-button.openDrawerBtn {
   opacity: var(--opacity-value);
 }
 
+/* Position the Permit Tracker button */
+sl-button.permitTrackerBtn {
+  bottom: 85px;
+}
+
 /* Light mode styling (default) */
 sl-button.openDrawerBtn::part(base) {
   background-color: #343a40;
   /* Dark background in light mode */
   color: white;
-  font-size: 20px;
   border-radius: 10px;
   border: 1px solid #efefef;
   width: 148px;
@@ -302,7 +306,8 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
   opacity: var(--opacity-value);
   border-radius: 10px;
   border: 1px solid #343a40;
-  bottom: 88px;
+  bottom: 143px;
+  /* Adjusted position to account for new button */
   font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
   padding: 10px;
   position: absolute;
@@ -469,4 +474,18 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
 /* Disable scrollbar in sl-drawer */
 sl-drawer::part(body) {
   overflow-y: hidden;
+}
+
+/* Data currency text styling */
+.data-currency {
+  position: absolute;
+  /* center the text */
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-style: italic;
+  color: #343a40;
+  z-index: 1;
+  font-weight: 600;
 }

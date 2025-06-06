@@ -128,7 +128,7 @@
 
     <!-- Additional layers checkboxes -->
     <div class="additional-layers-container">
-      <h3 class="additional-layers-header">Additional Layers</h3>
+      <h3 class="additional-layers-header" style="margin-top: -18px;">Additional Layers</h3>
 
       <div class="additional-layers-checkboxes">
         <sl-checkbox id="competition">Competition</sl-checkbox>
@@ -187,8 +187,22 @@
     </sl-button>
   </sl-tooltip>
 
+  <!-- Permit Tracker button and drawer -->
+  <sl-tooltip id="permitTrackerTooltip" content="Open panel to see building permits." hoist trigger="manual">
+    <sl-button class="openDrawerBtn permitTrackerBtn" variant="plain">
+      <div style="font-size: 15px;">Permit Tracker</div>
+    </sl-button>
+  </sl-tooltip>
 
+  <sl-drawer label="Permit Tracker" placement="start" class="permit-tracker-drawer" hidden>
+    <!-- Content will be added later -->
+    <p>Placeholder for residential building permit data.</p>
 
+    <!-- close button -->
+    <sl-button slot="footer" class="close-permit-button" variant="primary">
+      Close
+    </sl-button>
+  </sl-drawer>
 
   <!-- Legend Container for main map -->
   <div id="legend" class="legend">
@@ -208,6 +222,8 @@
     <img src="Assets/nghs_logo.png" alt="Logo" class="nghs-logo">
   </a>
 
+  <!-- Data currency information -->
+  <div class="data-currency">Data current as of June 2025.</div>
 
   <!-- tooltip for visits -->
   <div id="tooltip"
