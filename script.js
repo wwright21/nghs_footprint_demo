@@ -2,6 +2,9 @@
 mapboxgl.accessToken =
   "pk.eyJ1Ijoid3dyaWdodDIxIiwiYSI6ImNtYTJ4NWtwdjAwb2oydnEzdjV0anRxeWIifQ.h63WS8JxUedXWYkcNCkSnQ";
 
+// Import permit chart module
+import { initPermitChart } from './js/permitChart.js';
+
 // Helper function to reverse latitude and longitude in bounds
 const LatLngUtils = {
   reverse(coord) {
@@ -2451,5 +2454,16 @@ openButton.addEventListener('click', () => drawer.show());
 closeButton.addEventListener('click', () => drawer.hide());
 
 // Event listeners for the permit tracker drawer
-permitTrackerButton.addEventListener('click', () => permitTrackerDrawer.show());
+permitTrackerButton.addEventListener('click', () => {
+  permitTrackerDrawer.show();
+});
+
+// Initialize the chart when the drawer is fully opened
+permitTrackerDrawer.addEventListener('sl-after-show', () => {
+  // Short delay to ensure the drawer is fully rendered
+  setTimeout(() => {
+    initPermitChart();
+  }, 100);
+});
+
 closePermitButton.addEventListener('click', () => permitTrackerDrawer.hide());

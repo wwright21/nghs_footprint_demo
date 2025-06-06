@@ -44,6 +44,9 @@
   <!-- Simple Statistis for jenks natural breaks -->
   <script src="https://unpkg.com/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
 
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
@@ -194,9 +197,11 @@
     </sl-button>
   </sl-tooltip>
 
-  <sl-drawer label="Permit Tracker" placement="start" class="permit-tracker-drawer" hidden>
-    <!-- Content will be added later -->
-    <p>Placeholder for residential building permit data.</p>
+  <sl-drawer label="" placement="bottom" class="permit-tracker-drawer" hidden>
+    <!-- Chart container -->
+    <div class="chart-container" style="position: relative; height:66vh; width:95%; margin: 5px auto 40px;">
+      <canvas id="permitChart"></canvas>
+    </div>
 
     <!-- close button -->
     <sl-button slot="footer" class="close-permit-button" variant="primary">
@@ -223,7 +228,7 @@
   </a>
 
   <!-- Data currency information -->
-  <div class="data-currency">Data current as of June 2025.</div>
+  <div class="data-currency">Patient visit data current as of June 2025.</div>
 
   <!-- tooltip for visits -->
   <div id="tooltip"
@@ -232,7 +237,7 @@
   </div>
 
   <!-- Reference the external JavaScript file -->
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 
 </html>

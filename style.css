@@ -478,14 +478,30 @@ sl-drawer::part(body) {
 
 /* Data currency text styling */
 .data-currency {
-  position: absolute;
   /* center the text */
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 16px;
+  font-size: 17px;
   font-style: italic;
+  position: absolute;
   color: #343a40;
   z-index: 1;
   font-weight: 600;
+  /* create a text buffer */
+  text-shadow: 2px 2px 1px #fff;
+}
+
+/* Permit tracker drawer styling */
+.permit-tracker-drawer::part(body) {
+  padding-top: 0;
+  overflow-y: hidden;
+}
+
+.permit-tracker-drawer::part(panel) {
+  height: 75vh;
+}
+
+.chart-container {
+  margin-top: 0 !important;
 }
